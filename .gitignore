@@ -1,0 +1,5 @@
+/lib/
+/.shards/
+/tmp/
+*.dwarf
+/action_view_cr

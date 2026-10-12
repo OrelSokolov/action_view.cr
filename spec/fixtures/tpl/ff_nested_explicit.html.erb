@@ -1,0 +1,1 @@
+<%= form_with model: user, url: "/users" do |f| %><%= f.fields_for "posts", post55 do |g| %><%= g.text_field "title" %><% end %><% end %>

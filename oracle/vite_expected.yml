@@ -1,0 +1,15 @@
+path_js_entry	/vite/assets/application-def456.js
+path_css_nested	/vite/assets/admin-0af1b2.css
+path_source_dir	/vite/assets/nested-0f1e2d.js
+path_image	/vite/assets/logo-789.png
+path_without_type_missing	raise:ViteRuby::MissingEntrypointError
+path_missing_entry	raise:ViteRuby::MissingEntrypointError
+js_tag	<script src="/vite/assets/application-def456.js" crossorigin="anonymous" type="module"></script><link rel="modulepreload" href="/vite/assets/vendor-abc123.js" as="script" crossorigin="anonymous"><link rel="stylesheet" href="/vite/assets/application-def456.css" media="screen" />
+js_tag_no_preload_no_styles	<script src="/vite/assets/application-def456.js" crossorigin="anonymous" type="module"></script>
+js_tag_two_entries	<script src="/vite/assets/application-def456.js" crossorigin="anonymous" type="module"></script>\n<script src="/vite/assets/second-987654.js" crossorigin="anonymous" type="module"></script><link rel="modulepreload" href="/vite/assets/vendor-abc123.js" as="script" crossorigin="anonymous"><link rel="stylesheet" href="/vite/assets/application-def456.css" media="screen" />
+css_tag	<link rel="stylesheet" href="/vite/assets/print-1b2c3d.css" />
+css_tag_nested	<link rel="stylesheet" href="/vite/assets/admin-0af1b2.css" />
+image_tag	<img src="/vite/assets/logo-789.png" />
+client_tag_dev_off	
+react_refresh_dev_off	
+js_tag_missing	raise:ViteRuby::MissingEntrypointError

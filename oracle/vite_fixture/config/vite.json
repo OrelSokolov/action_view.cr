@@ -1,0 +1,4 @@
+{
+  "all": { "sourceCodeDir": "app/frontend" },
+  "development": { "host": "127.0.0.1", "port": 34427, "autoBuild": false }
+}

@@ -1,0 +1,1 @@
+<%= form_with model: user, url: "/users" do |f| %><%= f.fields_for "posts", np1 do |g| %><%= g.check_box "_destroy" %><% end %><% end %>

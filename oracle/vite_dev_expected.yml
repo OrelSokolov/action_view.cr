@@ -1,0 +1,13 @@
+dev_path_js_entry	/vite/entrypoints/application.js
+dev_path_without_type	/vite/entrypoints/application
+dev_path_source_dir	/vite/src/nested.js
+dev_path_image	/vite/images/logo-789.png
+dev_css_path	/vite/entrypoints/print.css
+dev_js_tag	<script src="/vite/entrypoints/application.js" crossorigin="anonymous" type="module"></script>
+dev_js_tag_skip_flags	<script src="/vite/entrypoints/application.js" crossorigin="anonymous" type="module"></script>
+dev_js_tag_two_entries	<script src="/vite/entrypoints/application.js" crossorigin="anonymous" type="module"></script>\n<script src="/vite/entrypoints/second.js" crossorigin="anonymous" type="module"></script>
+dev_css_tag	<link rel="stylesheet" href="/vite/entrypoints/print.css" />
+dev_client_src	/vite/@vite/client
+dev_client_tag	<script src="/vite/@vite/client" crossorigin="anonymous" type="module"></script>
+dev_react_preamble_code	import RefreshRuntime from '/vite/@react-refresh'\nRefreshRuntime.injectIntoGlobalHook(window)\nwindow.$RefreshReg$ = () => {}\nwindow.$RefreshSig$ = () => (type) => type\nwindow.__vite_plugin_react_preamble_installed__ = true\n
+dev_react_refresh_tag	<script type="module">\n//<![CDATA[\nimport RefreshRuntime from '/vite/@react-refresh'\nRefreshRuntime.injectIntoGlobalHook(window)\nwindow.$RefreshReg$ = () => {}\nwindow.$RefreshSig$ = () => (type) => type\nwindow.__vite_plugin_react_preamble_installed__ = true\n\n//]]>\n</script>

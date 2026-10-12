@@ -1,0 +1,23 @@
+{
+  "_vendor-abc123.js": { "file": "assets/vendor-abc123.js", "name": "vendor-abc123" },
+  "entrypoints/application.js": {
+    "file": "assets/application-def456.js",
+    "name": "application",
+    "src": "entrypoints/application.js",
+    "isEntry": true,
+    "imports": ["_vendor-abc123.js"],
+    "css": ["assets/application-def456.css"]
+  },
+  "entrypoints/print.css": {
+    "file": "assets/print-1b2c3d.css",
+    "name": "print",
+    "src": "entrypoints/print.css",
+    "isEntry": true
+  },
+  "entrypoints/second.js": {
+    "file": "assets/second-987654.js",
+    "name": "second",
+    "src": "entrypoints/second.js",
+    "isEntry": true
+  }
+}
