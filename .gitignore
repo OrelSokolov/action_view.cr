@@ -3,3 +3,5 @@
 /tmp/
 *.dwarf
 /action_view_cr
+/shard.lock
+/shard.override.yml
