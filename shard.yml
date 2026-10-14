@@ -5,3 +5,6 @@ dependencies:
   active_support_cr:
     github: OrelSokolov/active_support.cr
     version: ~> 0.1.0
+  erb_cr:
+    github: OrelSokolov/erb.cr
+    version: ~> 0.1.0

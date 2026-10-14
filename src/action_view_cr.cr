@@ -1,13 +1,12 @@
-require "html"
+require "erb_cr"
+require "active_support_cr"
 # action_view.cr — порт ActionView (хелперы, шаблоны, FormBuilder).
 #
-# ERB-синтаксис компилируется в методы-рендеры на этапе сборки с
-# семантикой Rails: `<%= %>` экранирует (кроме SafeString), блочные
+# ERB-компиляция и output-safety — в шарде erb_cr (ERB::Rendering,
+# ERB::SafeString): `<%= %>` экранирует (кроме SafeString), блочные
 # хелперы работают через общий буфер вывода.
 
-require "active_support_cr"
 require "./output_safety"
-require "./rendering"
 require "./helpers/tag_helper"
 require "./helpers/text_helper"
 require "./helpers/url_helper"
@@ -23,17 +22,17 @@ require "./helpers/record_identifier"
 module ActionView
   VERSION = "0.1.0"
 
+  # ERB-слой живёт в erb_cr; алиас держит ActionView::SafeString тем же
+  # типом, что ERB::SafeString (используется хелперами и action_pack'ом).
+  alias SafeString = ERB::SafeString
+
   module Helpers
-    include ActionView::Rendering
+    include ERB::Rendering
 
     # ECR does not escape `<%= %>` output in hand-written legacy
-    # templates; compiled templates auto-escape via __av_esc instead.
+    # templates; compiled templates auto-escape via __erb_esc instead.
     def h(value) : String
       HTML.escape(value.to_s)
-    end
-
-    def html_escape(value : String) : String
-      HTML.escape(value)
     end
 
     include TagHelper

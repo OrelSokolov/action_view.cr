@@ -153,14 +153,14 @@ module ActionView
         # Rails: authenticity_token: false drops the utf8 enrollment
         # hidden field and the CSRF token.
         skip_enrollment = opts.delete("authenticity_token").== false
-        __av_out(String.build do |io|
+        __erb_out(String.build do |io|
           io << %(<form action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8"#{tag_options(opts)} method="post">)
           io << UTF8_ENROLLMENT unless skip_enrollment
           io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
           io << __csrf_token_field(url.to_s, method) unless skip_enrollment || method == "get"
         end)
         yield
-        __av_out "</form>"
+        __erb_out "</form>"
         ""
       end
     end

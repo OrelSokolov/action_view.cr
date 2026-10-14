@@ -34,14 +34,14 @@ module ActionView
         raise ArgumentError.new("form_with needs a url: or model:") unless url
         opts = __av_opts_to_h(opts)
         method = model.try(&.form_persisted?) ? "patch" : "post"
-        __av_out(String.build do |io|
+        __erb_out(String.build do |io|
           io << %(<form action="#{HTML.escape(url)}" accept-charset="UTF-8"#{tag_options(opts)} data-remote="true" method="post">)
           io << UTF8_ENROLLMENT
           io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
           io << __csrf_token_field(url, method)
         end)
         yield FormBuilder.new(self, scope || "", model)
-        __av_out "</form>"
+        __erb_out "</form>"
         ""
       end
 
@@ -142,7 +142,7 @@ module ActionView
               builder = FormBuilder.new(@view, "#{@scope}[#{name}_attributes][#{index}]", child, emit_ids: true)
               yield builder
               if include_id && child.form_persisted? && !builder.emitted_hidden_id?
-                @view.__av_out(builder.hidden_field("id"))
+                @view.__erb_out(builder.hidden_field("id"))
               end
             end
           else

@@ -25,11 +25,11 @@ module ActionView
         if ActionView.perform_caching
           key = fragment_cache_key(name)
           if (hit = ActionView.cache_store.read(key))
-            __av_out(hit)
+            __erb_out(hit)
           else
             content = capture { yield }
             ActionView.cache_store.write(key, content, expires_in)
-            __av_out(content)
+            __erb_out(content)
           end
         else
           yield

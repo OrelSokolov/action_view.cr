@@ -3,9 +3,10 @@
 > ⚠️ EXPERIMENTAL FRAMEWORK, DO NOT USE IN PRODUCTION YET.
 
 Неймспейс: `ActionView` — 1:1. Шаблоны: **ERB-синтаксис** (совместимы с
-Rails): собственный компилятор `src/template_processor.cr` (через macro
-`run()`, как stdlib ECR) генерирует методы-рендеры на этапе сборки;
-`<%= %>` автоэкранирует, SafeString — маркер safe-HTML.
+Rails): компилятор и rendering-pipeline вынесены в шард erb_cr
+(`ERB::Rendering`, `ERB::SafeString`; см. PLAN_MIGRATION_ERB.md) —
+через macro `run()`, как stdlib ECR, генерирует методы-рендеры на
+этапе сборки; `<%= %>` автоэкранирует, SafeString — маркер safe-HTML.
 
 ## Статус (fields_for + fragment cache добавлено 2026-10-05; Vite P0 2026-10-05, база Iteration 3; Vite P1 dev-теги 2026-10-05)
 
