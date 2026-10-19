@@ -1,3 +1,4 @@
+require "attr_reader_cr"
 require "erb_cr"
 require "active_support_cr"
 # action_view.cr — порт ActionView (хелперы, шаблоны, FormBuilder).

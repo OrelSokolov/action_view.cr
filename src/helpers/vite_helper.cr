@@ -114,15 +114,15 @@ module ViteRuby
     end
 
     struct Entry
-      getter file : String       # уже с префиксом /vite/
-      getter css : Array(String)
-      getter imports : Array(Entry)
+      attr_reader file : String       # уже с префиксом /vite/
+      attr_reader css : Array(String)
+      attr_reader imports : Array(Entry)
 
       def initialize(@file, @css, @imports)
       end
     end
 
-    getter entries : Hash(String, Entry)
+    attr_reader entries : Hash(String, Entry)
 
     def initialize
       raw = {} of String => JSON::Any
