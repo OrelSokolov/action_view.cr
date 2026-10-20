@@ -39,21 +39,39 @@ module ActionView
       # nil omitted, nested `data:`/`aria:` hashes flattened. Accepts
       # both Hash and NamedTuple (what `**opts` double splats to).
       # Normalizes `**opts` double splats (NamedTuple, possibly empty)
-      # into String-keyed hashes.
-      alias AttrVal = String | Int32 | Int64 | Float64 | Bool | Nil | Hash(String, String)
+      # into String-keyed hashes; nested NamedTuples (data: {controller: "x"})
+      # become String-keyed Hashes the same way.
+      alias AttrVal = String | Int32 | Int64 | Float64 | Bool | Nil | Hash(String, AttrVal)
 
       def __av_opts_to_h(opts) : Hash(String, AttrVal)
         h = {} of String => AttrVal
         opts.each do |k, v|
-          h[k.to_s] = v.is_a?(Symbol) ? v.to_s : v.as(AttrVal)
+          h[k.to_s] = __av_normalize_val(v)
         end
         h
+      end
+
+      # Symbol → String, nested NamedTuple/Hash (data: {controller: "x"},
+      # possibly symbol-keyed) → String-keyed Hash; AttrVal passes through.
+      def self.__av_normalize_val(v) : AttrVal
+        case v
+        when Symbol     then v.to_s
+        when NamedTuple, Hash
+          nested = {} of String => AttrVal
+          v.each { |nk, nv| nested[nk.to_s] = TagHelper.__av_normalize_val(nv) }
+          nested
+        else v.as(AttrVal)
+        end
+      end
+
+      def __av_normalize_val(v) : AttrVal
+        TagHelper.__av_normalize_val(v)
       end
 
       def tag_options(opts) : String
         String.build do |io|
           opts.each do |key, value|
-            __av_tag_option(io, key.to_s, value)
+            __av_tag_option(io, key.to_s, __av_normalize_val(value))
           end
         end
       end
@@ -63,7 +81,7 @@ module ActionView
       def self.tag_options(opts) : String
         String.build do |io|
           opts.each do |key, value|
-            new_tag_option(io, key.to_s, value)
+            new_tag_option(io, key.to_s, TagHelper.__av_normalize_val(value))
           end
         end
       end
