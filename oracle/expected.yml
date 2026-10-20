@@ -108,6 +108,31 @@ ft_options_selected	<option selected="selected" value="a">a</option>
 <option value="b">b</option>
 ft_form_tag	<form action="/posts" accept-charset="UTF-8" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" />x</form>
 ft_form_tag_method	<form action="/p" accept-charset="UTF-8" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" />x</form>
+ft_file_field	<input type="file" name="avatar" id="avatar" class="i" />
+ft_file_field_accept	<input type="file" name="avatar" id="avatar" accept="image/png,image/jpeg" />
+ft_time_field	<input type="time" name="t" id="t" value="12:30" />
+ft_time_time_value	<input type="time" name="t" id="t" value="2026-01-02 12:30:45 UTC" />
+ft_datetime_field	<input type="datetime-local" name="dt" id="dt" value="2026-01-02T12:30:00Z" />
+ft_datetime_local	<input type="datetime-local" name="dtl" id="dtl" value="2026-01-02T12:30:00" />
+ft_month_field	<input type="month" name="m" id="m" value="2026-01" />
+ft_week_field	<input type="week" name="w" id="w" value="2026-W23" />
+ft_phone_field	<input type="tel" name="p" id="p" value="555" />
+ft_image_submit	<input type="image" src="/images/icons/go.png" />
+ft_image_submit_alt	<input type="image" src="/images/icons/go.png" alt="Custom" />
+ft_image_submit_abs	<input type="image" src="/go.png" />
+ft_image_submit_url	<input type="image" src="https://x.y/go.png" />
+ft_label_opts	<label class="l" for="name">Name</label>
+ft_button_block	<button name="button" type="submit" class="btn">Go</button>
+ft_check_id_nil	<input type="checkbox" name="user_ids[]" value="5" class="sw" checked="checked" />
+ft_check_disabled	<input type="checkbox" name="ok" id="ok" value="1" disabled="disabled" checked="checked" />
+ft_check_opts	<input type="checkbox" name="ok" id="custom" value="1" class="sw" checked="checked" />
+ft_radio_opts	<input type="radio" name="g" id="g_f" value="f" class="r" checked="checked" />
+ft_radio_disabled	<input type="radio" name="g" value="f" disabled="disabled" />
+ft_submit_turbo	<input type="submit" name="commit" value="S" class="b" data-turbo-submits-with="Working" data-disable-with="S" />
+ft_select_disabled	<select name="t" id="t" disabled="disabled"><option value="1">A</option></select>
+ft_options_selected_array	<option selected="selected" value="1">A</option>
+<option selected="selected" value="2">B</option>
+ft_label_block	<label class="l" for="name">Text</label>
 fw_url	<form action="/x" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" />B</form>
 fw_model_new	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="text" value="t" name="post[title]" /></form>
 fw_model	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="text" value="Hi" name="post[title]" /><textarea name="post[body]">

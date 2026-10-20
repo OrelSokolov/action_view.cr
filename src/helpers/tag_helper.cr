@@ -72,7 +72,7 @@ module ActionView
           # omitted
         when Hash
           value.each do |nested_key, nested_value|
-            new_tag_option(io, "#{key}-#{nested_key}", nested_value)
+            new_tag_option(io, "#{key}-#{nested_key.to_s.gsub('_', '-')}", nested_value)
           end
         else
           io << " " << key << "=" << '"' << __av_attr_escape(__av_value_to_s(value)) << '"'

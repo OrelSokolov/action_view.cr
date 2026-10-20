@@ -66,6 +66,8 @@ end
   radio_button_tag text_area_tag search_field_tag telephone_field_tag
   url_field_tag color_field_tag range_field_tag submit_tag button_tag
   select_tag options_for_select
+  file_field_tag time_field_tag datetime_field_tag datetime_local_field_tag
+  month_field_tag week_field_tag phone_field_tag image_submit_tag
 ].each do |m|
   define_method(m) { |*a, **k, &b| CTX.public_send(m, *a, **k, &b) }
 end
@@ -200,6 +202,32 @@ case_run("ft_select_multiple")  { select_tag("t", options_for_select([["A", 1], 
 case_run("ft_options_selected") { options_for_select(%w[a b], "a") }
 case_run("ft_form_tag")         { tpl(%q{<%= form_tag "/posts" do %>x<% end %>}) }
 case_run("ft_form_tag_method")  { tpl(%q{<%= form_tag "/p", method: :patch do %>x<% end %>}) }
+
+# --- FormTagHelper (FORMS_SUPPORT phase 1) ------------------------
+case_run("ft_file_field")        { file_field_tag("avatar", class: "i") }
+case_run("ft_file_field_accept") { file_field_tag("avatar", accept: "image/png,image/jpeg") }
+case_run("ft_time_field")        { time_field_tag("t", "12:30") }
+case_run("ft_time_time_value")   { time_field_tag("t", Time.utc(2026, 1, 2, 12, 30, 45)) }
+case_run("ft_datetime_field")    { datetime_field_tag("dt", "2026-01-02T12:30:00Z") }
+case_run("ft_datetime_local")    { datetime_local_field_tag("dtl", "2026-01-02T12:30:00") }
+case_run("ft_month_field")       { month_field_tag("m", "2026-01") }
+case_run("ft_week_field")        { week_field_tag("w", "2026-W23") }
+case_run("ft_phone_field")       { phone_field_tag("p", "555") }
+case_run("ft_image_submit")      { image_submit_tag("icons/go.png") }
+case_run("ft_image_submit_alt")  { image_submit_tag("icons/go.png", alt: "Custom") }
+case_run("ft_image_submit_abs")  { image_submit_tag("/go.png") }
+case_run("ft_image_submit_url")  { image_submit_tag("https://x.y/go.png") }
+case_run("ft_label_opts")        { label_tag("name", "Name", class: "l") }
+case_run("ft_button_block")      { tpl(%q{<%= button_tag class: "btn", type: "submit" do %>Go<% end %>}) }
+case_run("ft_check_id_nil")      { check_box_tag("user_ids[]", "5", true, id: nil, class: "sw") }
+case_run("ft_check_disabled")    { check_box_tag("ok", "1", true, disabled: true) }
+case_run("ft_check_opts")        { check_box_tag("ok", "1", true, class: "sw", id: "custom") }
+case_run("ft_radio_opts")        { radio_button_tag("g", "f", true, class: "r") }
+case_run("ft_radio_disabled")    { radio_button_tag("g", "f", false, disabled: true, id: nil) }
+case_run("ft_submit_turbo")      { submit_tag("S", class: "b", data: {turbo_submits_with: "Working"}) }
+case_run("ft_select_disabled")   { select_tag("t", options_for_select([["A", 1]]), disabled: true) }
+case_run("ft_options_selected_array") { options_for_select([["A", 1], ["B", 2]], [1, 2]) }
+case_run("ft_label_block")       { tpl(%q{<%= label_tag "name", class: "l" do %>Text<% end %>}) }
 
 # --- FormHelper / FormBuilder ------------------------------------
 POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true)

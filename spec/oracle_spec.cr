@@ -115,6 +115,8 @@ class TplView
   compile_template "tpl_link_block", "#{__DIR__}/fixtures/tpl/link_block.html.erb"
   compile_template "tpl_form_tag", "#{__DIR__}/fixtures/tpl/form_tag.html.erb"
   compile_template "tpl_form_tag_method", "#{__DIR__}/fixtures/tpl/form_tag_method.html.erb"
+  compile_template "tpl_button_block", "#{__DIR__}/fixtures/tpl/button_block.html.erb"
+  compile_template "tpl_label_block", "#{__DIR__}/fixtures/tpl/label_block.html.erb"
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
@@ -276,6 +278,31 @@ CASES = {
   "ft_options_selected" => -> { CTX.options_for_select(["a", "b"], "a").to_s },
   "ft_form_tag"         => -> { VIEW.tpl_form_tag.to_s },
   "ft_form_tag_method"  => -> { VIEW.tpl_form_tag_method.to_s },
+  # --- form tag helpers (FORMS_SUPPORT phase 1) ---
+  "ft_file_field"        => -> { CTX.file_field_tag("avatar", class: "i").to_s },
+  "ft_file_field_accept" => -> { CTX.file_field_tag("avatar", accept: "image/png,image/jpeg").to_s },
+  "ft_time_field"        => -> { CTX.time_field_tag("t", "12:30").to_s },
+  "ft_time_time_value"   => -> { CTX.time_field_tag("t", Time.utc(2026, 1, 2, 12, 30, 45)).to_s },
+  "ft_datetime_field"    => -> { CTX.datetime_field_tag("dt", "2026-01-02T12:30:00Z").to_s },
+  "ft_datetime_local"    => -> { CTX.datetime_local_field_tag("dtl", "2026-01-02T12:30:00").to_s },
+  "ft_month_field"       => -> { CTX.month_field_tag("m", "2026-01").to_s },
+  "ft_week_field"        => -> { CTX.week_field_tag("w", "2026-W23").to_s },
+  "ft_phone_field"       => -> { CTX.phone_field_tag("p", "555").to_s },
+  "ft_image_submit"      => -> { CTX.image_submit_tag("icons/go.png").to_s },
+  "ft_image_submit_alt"  => -> { CTX.image_submit_tag("icons/go.png", alt: "Custom").to_s },
+  "ft_image_submit_abs"  => -> { CTX.image_submit_tag("/go.png").to_s },
+  "ft_image_submit_url"  => -> { CTX.image_submit_tag("https://x.y/go.png").to_s },
+  "ft_button_block"      => -> { VIEW.tpl_button_block.to_s },
+  "ft_check_id_nil"      => -> { CTX.check_box_tag("user_ids[]", "5", true, id: nil, class: "sw").to_s },
+  "ft_check_disabled"    => -> { CTX.check_box_tag("ok", "1", true, disabled: true).to_s },
+  "ft_check_opts"        => -> { CTX.check_box_tag("ok", "1", true, class: "sw", id: "custom").to_s },
+  "ft_radio_opts"        => -> { CTX.radio_button_tag("g", "f", true, class: "r").to_s },
+  "ft_radio_disabled"    => -> { CTX.radio_button_tag("g", "f", false, disabled: true, id: nil).to_s },
+  "ft_submit_turbo"      => -> { CTX.submit_tag("S", class: "b", data: {"turbo_submits_with" => "Working"}).to_s },
+  "ft_select_disabled"   => -> { CTX.select_tag("t", CTX.options_for_select([{"A", 1}]), disabled: true).to_s },
+  "ft_options_selected_array" => -> { CTX.options_for_select([{"A", 1}, {"B", 2}], [1, 2]).to_s },
+  "ft_label_block"       => -> { VIEW.tpl_label_block.to_s },
+  "ft_label_opts"        => -> { CTX.label_tag("name", "Name", class: "l").to_s },
   # --- form_with / FormBuilder ---
   "fw_url"         => -> { VIEW.tpl_fw_url.to_s },
   "fw_model_new"   => -> { VIEW.tpl_fw_model_new.to_s },
