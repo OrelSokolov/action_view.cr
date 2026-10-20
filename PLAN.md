@@ -16,7 +16,12 @@ Rails): компилятор и rendering-pipeline вынесены в шард 
 настоящих vite_rails 3.0.19 / vite_ruby 3.9.2 — версий из
 Gemfile.lock qp2/website) и `oracle/vite_dev_cases.rb` →
 `oracle/vite_dev_expected.yml` (13 кейсов dev-режима), зеркало —
-`spec/vite_spec.cr`. Сюита — **151 examples, 0 failures**.
+`spec/vite_spec.cr`. Сюита — **180 examples, 0 failures** (151 + 29
+ft-кейсов FORMS_SUPPORT фазы 1, 2026-10-20: file/time/datetime/
+datetime_local/month/week/phone `*_tag` + `image_submit_tag`,
+`button_tag`/`label_tag` с блоком, merge-порядок атрибутов
+`check_box_tag`/`radio_button_tag` (`id: nil`, opts до `checked`),
+дашеризация вложенных data/aria-ключей; v0.1.3).
 
 fields_for + fragment cache (2026-10-05):
 - `fields_for` (view-level) и `FormBuilder#fields_for` — вложенные
