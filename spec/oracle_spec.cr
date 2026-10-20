@@ -199,6 +199,7 @@ class TplView
   compile_template "tpl_fw_ids_model", "#{__DIR__}/fixtures/tpl/fw_ids_model.html.erb"
   compile_template "tpl_ff_password", "#{__DIR__}/fixtures/tpl/ff_password.html.erb"
   compile_template "tpl_ff_text_nil", "#{__DIR__}/fixtures/tpl/ff_text_nil.html.erb"
+  compile_template "tpl_ff_textarea_value", "#{__DIR__}/fixtures/tpl/ff_textarea_value.html.erb"
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
@@ -444,6 +445,7 @@ CASES = {
   },
   "ff_password"  => -> { VIEW.tpl_ff_password.to_s },
   "ff_text_nil"  => -> { VIEW.tpl_ff_text_nil.to_s },
+  "ff_textarea_value" => -> { VIEW.tpl_ff_textarea_value.to_s },
   # --- capture ---
   "cap_content_for" => -> { VIEW.tpl_content_for.to_s },
   # --- fields_for ---

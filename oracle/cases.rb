@@ -308,6 +308,7 @@ ensure
 end
 case_run("ff_password")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.password_field :title %><% end %>}) }
 case_run("ff_text_nil")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_field :author_id %><% end %>}) }
+case_run("ff_textarea_value")  { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_area :body, value: "OVERRIDE", rows: 3 %><% end %>}) }
 
 # --- Partials (on-disk fixtures in oracle/fixtures) ---------------
 # A second standalone view whose lookup paths point at the fixtures

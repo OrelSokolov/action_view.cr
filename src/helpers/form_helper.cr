@@ -130,11 +130,13 @@ module ActionView
         end
 
         # id attribute, emitted only when the builder generates ids
-        # (form_with: config-gated; fields_for: always). Same
-        # sanitization as Rails field_id: "user[posts_attributes][0]"
-        # + "title" → "user_posts_attributes_0_title".
-        private def id_attr(attr : String) : String
+        # (form_with: config-gated; fields_for: always) AND the caller
+        # hasn't passed an explicit id: opt (Rails skip_default_ids
+        # semantics). Same sanitization as Rails field_id:
+        # "user[posts_attributes][0]" + "title" → "user_posts_attributes_0_title".
+        private def id_attr(attr : String, explicit_id : Bool = false) : String
           return "" unless @emit_ids
+          return "" if explicit_id
           %( id="#{field_id(attr)}")
         end
 
@@ -160,7 +162,7 @@ module ActionView
             h["value"] = field_value unless h["value"]? || field_value.nil?
           end
           h["name"] = name_of(attr)
-          SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr)} />))
+          SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr, h.has_key?("id"))} />))
         end
 
         # ISO-style formatting of Time values for the date/time fields
@@ -275,7 +277,7 @@ module ActionView
           h["type"] = "hidden" unless h["type"]?
           h["value"] = value_of(attr.to_s) unless h["value"]?
           h["name"] = name_of(attr.to_s)
-          SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr.to_s)} />))
+          SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr.to_s, h.has_key?("id"))} />))
         end
 
         # Positional values as named args (Crystal has no positional
@@ -296,13 +298,13 @@ module ActionView
             io << %(<input name="#{name}" type="hidden" value="#{HTML.escape(unchecked_value)}" autocomplete="off" />) if hidden
             io << %(<input#{@view.tag_options(opts)} type="checkbox" value="#{HTML.escape(checked_value)}")
             io << %( checked="checked") if checked
-            io << %( name="#{name}"#{id_attr(attr.to_s)} />)
+            io << %( name="#{name}"#{id_attr(attr.to_s, opts.has_key?(:id))} />)
           end)
         end
 
         def radio_button(attr : String | Symbol, tag_value : String, **opts) : SafeString
           checked = value_of(attr.to_s) == tag_value ? %( checked="checked") : ""
-          SafeString.new(%(<input#{@view.tag_options(opts)} type="radio" value="#{HTML.escape(tag_value)}"#{checked} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s)} />))
+          SafeString.new(%(<input#{@view.tag_options(opts)} type="radio" value="#{HTML.escape(tag_value)}"#{checked} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s, opts.has_key?(:id))} />))
         end
 
         # --- select family (FORMS_SUPPORT phase 2 + 3.4) ---------------
@@ -357,7 +359,7 @@ module ActionView
           name = name_of(attr)
           html_name = multiple ? "#{name}[]" : name
           h["name"] = html_name
-          select_html = %(<select#{@view.tag_options(h)}#{id_attr(attr)}>#{option_tags}</select>)
+          select_html = %(<select#{@view.tag_options(h)}#{id_attr(attr, h.has_key?("id"))}>#{option_tags}</select>)
           hidden = multiple && include_hidden ? %(<input name="#{html_name}" type="hidden" value="" autocomplete="off" />) : ""
           SafeString.new(hidden + select_html)
         end
@@ -459,8 +461,14 @@ module ActionView
           SafeString.new(hidden + body)
         end
 
+        # Rails Tags::TextArea: an explicit value: opt wins over the
+        # object's attribute value; attribute order opts → name → id
+        # (oracle ff_textarea_value).
         def text_area(attr : String | Symbol, **opts) : SafeString
-          SafeString.new(%(<textarea name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s)}#{@view.tag_options(opts)}>\n#{HTML.escape(value_of(attr.to_s))}</textarea>))
+          h = {} of String => AttrVal
+          @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
+          value = (v = h.delete("value")) ? v.to_s : value_of(attr.to_s)
+          SafeString.new(%(<textarea#{@view.tag_options(h)} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s, h.has_key?("id"))}>\n#{HTML.escape(value)}</textarea>))
         end
 
         # fields_for — nested forms (oracle: ff_nested*, ff_child_index,
@@ -500,17 +508,18 @@ module ActionView
         # `for` is emitted when the builder generates ids (Rails label
         # respects skip_default_ids); opts render before it, as in
         # label_tag.
-        private def label_for_attr(attr : String) : String
+        private def label_for_attr(attr : String, explicit_for : Bool = false) : String
+          return "" if explicit_for
           @emit_ids ? %( for="#{field_id(attr)}") : ""
         end
 
         def label(attr : String | Symbol, text : String? = nil, **opts) : SafeString
-          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s)}>#{HTML.escape(text || attr.to_s.gsub('_', ' ').capitalize)}</label>))
+          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s, opts.has_key?(:for))}>#{HTML.escape(text || attr.to_s.gsub('_', ' ').capitalize)}</label>))
         end
 
         def label(attr : String | Symbol, **opts, &) : SafeString
           body = @view.capture { yield }
-          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s)}>#{body}</label>))
+          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s, opts.has_key?(:for))}>#{body}</label>))
         end
 
         # Default caption uses I18n model names in Rails ("Update Post");
