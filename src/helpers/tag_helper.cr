@@ -7,6 +7,14 @@
 module ActionView
   module Helpers
     module TagHelper
+      # The _method hidden input (used by form_with/form_tag/button_to);
+      # autocomplete gated by config (8.1 gem emits it, edge/8.2 does
+      # not — oracle fw_local_method).
+      def __av_method_field(method : String) : String
+        ac = FormTagHelper.method_field_autocomplete ? %( autocomplete="off") : ""
+        %(<input type="hidden" name="_method" value="#{method}"#{ac} />)
+      end
+
       # Escapes attribute values the way Rails tag_options does.
       def self.__av_attr_escape(value : String) : String
         value.gsub('&', "&amp;")

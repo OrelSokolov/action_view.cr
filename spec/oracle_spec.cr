@@ -504,6 +504,20 @@ describe "action_view oracle (actionview 8.1.4)" do
     extra.should be_empty
   end
 
+  # Rails 8.2 app behavior (the oracle gem is 8.1.4 and always emits
+  # autocomplete="off"; the app oracle in capybara-tests/artifacts/rails
+  # renders the _method hidden without it). Not oracle-drivable.
+  it "omits autocomplete on _method when method_field_autocomplete is off" do
+    ActionView::Helpers::FormHelper.form_with_generates_remote_forms = false
+    ActionView::Helpers::FormTagHelper.default_enforce_utf8 = false
+    ActionView::Helpers::FormTagHelper.method_field_autocomplete = false
+    result = VIEW.form_with(url: "/u/1", method: "delete").to_s
+    ActionView::Helpers::FormTagHelper.method_field_autocomplete = true
+    ActionView::Helpers::FormTagHelper.default_enforce_utf8 = true
+    ActionView::Helpers::FormHelper.form_with_generates_remote_forms = true
+    result.should eq(%(<form action="/u/1" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="delete" />))
+  end
+
   it "content_for stores content for the layout" do
     VIEW.tpl_content_for.to_s # run once to fill :sidebar
     VIEW.content_for(:sidebar).to_s.should eq("S")

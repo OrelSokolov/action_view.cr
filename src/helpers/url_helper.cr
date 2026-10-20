@@ -50,7 +50,7 @@ module ActionView
         opts = __av_opts_to_h(opts)
         method = (opts.delete("method") || "post").to_s
         inner = String.build do |io|
-          io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
+          io << __av_method_field(method) unless method == "post"
           io << %(<input type="submit" value="#{HTML.escape(name)}"#{tag_options(opts)} />)
         end
         SafeString.new(%(<form class="button_to" method="post" action="#{HTML.escape(url)}">#{inner}</form>))

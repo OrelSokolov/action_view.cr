@@ -15,6 +15,10 @@ module ActionView
       # utf8 enrollment hidden field).
       class_property default_enforce_utf8 = true
 
+      # Rails 8.1 emits autocomplete="off" on the _method hidden input;
+      # edge/8.2 dropped it. Apps targeting 8.2 set this to false.
+      class_property method_field_autocomplete = true
+
       # No forgery layer in plain view contexts; overridden by
       # RequestForgeryProtection in controllers.
       protected def __protect_against_forgery? : Bool
@@ -216,7 +220,7 @@ module ActionView
         __erb_out(String.build do |io|
           io << %(<form action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8"#{tag_options(opts)} method="post">)
           io << UTF8_ENROLLMENT unless !enforce_utf8
-          io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
+          io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url.to_s, method) unless skip_enrollment || method == "get"
         end)
         yield

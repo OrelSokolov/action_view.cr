@@ -52,7 +52,7 @@ module ActionView
           io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
           io << %( method="post">)
           io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
-          io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
+          io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url, method)
           io << body << "</form>"
         end)
@@ -70,7 +70,7 @@ module ActionView
           io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
           io << %( method="post">)
           io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
-          io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
+          io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url.to_s, method)
         end)
       end
