@@ -13,6 +13,8 @@ tag_input_bool_true	<input type="checkbox" checked="checked" />
 tag_input_bool_false	<input type="checkbox" />
 tag_nil_value	<img alt="a" />
 tag_data_nested	<div data-remote="true" data-url="/x" />
+tag_data_bool	<div data-boost="true" data-other="false" aria-busy="true" />
+tag_plain_bool_true	<div data_visible="true" x_flag="false" />
 tag_aria_nested	<div aria-hidden="true" />
 tag_escape_values	<img alt="a&quot;b&amp;&lt;c" />
 tag_dot_form	<br>

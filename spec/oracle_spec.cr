@@ -277,6 +277,8 @@ CASES = {
   "tag_input_bool_false" => -> { CTX.tag("input", type: "checkbox", checked: false).to_s },
   "tag_nil_value"       => -> { CTX.tag("img", src: nil, alt: "a").to_s },
   "tag_data_nested"     => -> { CTX.tag("div", data: {"remote" => "true", "url" => "/x"}).to_s },
+  "tag_data_bool"       => -> { CTX.tag("div", data: {"boost" => true, "other" => false}, aria: {"busy" => true}, hidden: false).to_s },
+  "tag_plain_bool_true" => -> { CTX.tag("div", data_visible: true, x_flag: false).to_s },
   "tag_aria_nested"     => -> { CTX.tag("div", aria: {"hidden" => "true"}).to_s },
   "tag_escape_values"   => -> { CTX.tag("img", alt: %(a"b&<c)).to_s },
   "tag_dot_form"        => -> { CTX.tag.br.to_s },

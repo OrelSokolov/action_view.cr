@@ -35,7 +35,8 @@ module ActionView
         value.to_s
       end
 
-      # Renders `key="value"` pairs: booleans as `key="key"` / omitted,
+      # Renders `key="value"` pairs: boolean attributes as `key="key"` /
+      # omitted (BOOLEAN_ATTRIBUTES), other Bool values as "true"/"false",
       # nil omitted, nested `data:`/`aria:` hashes flattened. Accepts
       # both Hash and NamedTuple (what `**opts` double splats to).
       # Normalizes `**opts` double splats (NamedTuple, possibly empty)
@@ -90,10 +91,28 @@ module ActionView
         TagHelper.new_tag_option(io, key, value)
       end
 
+      # Rails BOOLEAN_ATTRIBUTES (actionview 8.1.4): these keys render
+      # `key="key"` when true and are omitted when false; every OTHER
+      # key with a Bool value goes through tag_option's to_s — "true"/
+      # "false" (oracle tag_data_bool: data: {x: true} → data-x="true").
+      BOOLEAN_ATTRIBUTES = %w(allowfullscreen allowpaymentrequest async autofocus
+                              autoplay checked compact controls declare default
+                              defaultchecked defaultmuted defaultselected defer
+                              disabled enabled formnovalidate hidden indeterminate
+                              inert ismap itemscope loop multiple muted nohref
+                              nomodule noresize noshade novalidate nowrap open
+                              pauseonexit playsinline readonly required reversed
+                              scoped seamless selected sortable truespeed
+                              typemustmatch visible)
+
       def self.new_tag_option(io : IO, key : String, value) : Nil
         case value
         when Bool
-          io << " " << key << %(="#{key}") if value
+          if BOOLEAN_ATTRIBUTES.includes?(key)
+            io << " " << key << %(="#{key}") if value
+          else
+            io << " " << key << %(="#{value}")
+          end
         when Nil
           # omitted
         when Hash

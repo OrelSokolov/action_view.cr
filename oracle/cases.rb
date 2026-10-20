@@ -15,6 +15,10 @@ require "action_view"
 require "active_model"
 require "active_support/cache/memory_store"
 require "active_support/core_ext/date/calculations"
+# tag_options' prefix_tag_option (#to_json for non-String data:/aria:
+# values — data: {x: true} → data-x="true") needs the json monkey
+# patches; a real Rails app always has them loaded.
+require "json"
 
 def render(v)
   case v
@@ -117,6 +121,8 @@ case_run("tag_input_bool_true") { tag("input", type: "checkbox", checked: true) 
 case_run("tag_input_bool_false"){ tag("input", type: "checkbox", checked: false) }
 case_run("tag_nil_value")       { tag("img", src: nil, alt: "a") }
 case_run("tag_data_nested")     { tag("div", data: {remote: "true", url: "/x"}) }
+case_run("tag_data_bool")       { tag("div", data: {boost: true, other: false}, aria: {busy: true}, hidden: false) }
+case_run("tag_plain_bool_true") { tag("div", data_visible: true, x_flag: false) }
 case_run("tag_aria_nested")     { tag("div", aria: {hidden: "true"}) }
 case_run("tag_escape_values")   { tag("img", alt: %(a"b&<c)) }
 case_run("tag_dot_form")        { tag.br }
