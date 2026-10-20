@@ -11,6 +11,10 @@ module ActionView
       include TagHelper
       include FormOptionsHelper
 
+      # Rails default; load_defaults 6.0+ apps set this to false (no
+      # utf8 enrollment hidden field).
+      class_property default_enforce_utf8 = true
+
       # No forgery layer in plain view contexts; overridden by
       # RequestForgeryProtection in controllers.
       protected def __protect_against_forgery? : Bool
@@ -208,9 +212,10 @@ module ActionView
         # Rails: authenticity_token: false drops the utf8 enrollment
         # hidden field and the CSRF token.
         skip_enrollment = opts.delete("authenticity_token").== false
+        enforce_utf8 = skip_enrollment || !FormTagHelper.default_enforce_utf8 ? false : true
         __erb_out(String.build do |io|
           io << %(<form action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8"#{tag_options(opts)} method="post">)
-          io << UTF8_ENROLLMENT unless skip_enrollment
+          io << UTF8_ENROLLMENT unless !enforce_utf8
           io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
           io << __csrf_token_field(url.to_s, method) unless skip_enrollment || method == "get"
         end)

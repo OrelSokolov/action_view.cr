@@ -195,6 +195,10 @@ class TplView
   compile_template "tpl_fs_collection_checks", "#{__DIR__}/fixtures/tpl/fs_collection_checks.html.erb"
   compile_template "tpl_fs_collection_radios", "#{__DIR__}/fixtures/tpl/fs_collection_radios.html.erb"
   compile_template "tpl_fs_weekday", "#{__DIR__}/fixtures/tpl/fs_weekday.html.erb"
+  compile_template "tpl_fw_local", "#{__DIR__}/fixtures/tpl/fw_local.html.erb"
+  compile_template "tpl_fw_ids_model", "#{__DIR__}/fixtures/tpl/fw_ids_model.html.erb"
+  compile_template "tpl_ff_password", "#{__DIR__}/fixtures/tpl/ff_password.html.erb"
+  compile_template "tpl_ff_text_nil", "#{__DIR__}/fixtures/tpl/ff_text_nil.html.erb"
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
@@ -421,6 +425,25 @@ CASES = {
   "fs_collection_checks"    => -> { VIEW.tpl_fs_collection_checks.to_s },
   "fs_collection_radios"    => -> { VIEW.tpl_fs_collection_radios.to_s },
   "fs_weekday"              => -> { VIEW.tpl_fs_weekday.to_s },
+  # --- app-config form semantics (local forms / ids / no utf8) ---
+  "fw_local"     => -> {
+    ActionView::Helpers::FormHelper.form_with_generates_remote_forms = false
+    ActionView::Helpers::FormTagHelper.default_enforce_utf8 = false
+    ActionView::Helpers::FormHelper.form_with_generates_ids = true
+    out = VIEW.tpl_fw_local.to_s
+    ActionView::Helpers::FormHelper.form_with_generates_remote_forms = true
+    ActionView::Helpers::FormTagHelper.default_enforce_utf8 = true
+    ActionView::Helpers::FormHelper.form_with_generates_ids = false
+    out
+  },
+  "fw_ids_model" => -> {
+    ActionView::Helpers::FormHelper.form_with_generates_ids = true
+    out = VIEW.tpl_fw_ids_model.to_s
+    ActionView::Helpers::FormHelper.form_with_generates_ids = false
+    out
+  },
+  "ff_password"  => -> { VIEW.tpl_ff_password.to_s },
+  "ff_text_nil"  => -> { VIEW.tpl_ff_text_nil.to_s },
   # --- capture ---
   "cap_content_for" => -> { VIEW.tpl_content_for.to_s },
   # --- fields_for ---

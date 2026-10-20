@@ -192,6 +192,10 @@ fs_weekday	<form action="/u" accept-charset="UTF-8" data-remote="true" method="p
 <option value="Friday">Friday</option>
 <option value="Saturday">Saturday</option>
 <option value="Sunday">Sunday</option></select></form>
+fw_local	<form class="flex flex-column gap" action="/session" accept-charset="UTF-8" method="post"><input required="required" class="input" autofocus="autofocus" autocomplete="username" placeholder="Enter your email address" value="" type="email" name="email_address" id="email_address" /><input required="required" class="input" autocomplete="current-password" placeholder="Enter your password" maxlength="72" size="72" type="password" name="password" id="password" /><button name="log_in" type="submit" class="btn btn--reversed center txt-large">Go</button></form>
+fw_ids_model	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="text" value="Hi" name="post[title]" id="post_title" /><label for="post_title">Title</label></form>
+ff_password	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="password" name="post[title]" /></form>
+ff_text_nil	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="text" name="post[author_id]" /></form>
 prt_locals	<article data-id="7">Hi</article>
 prt_collection	<article data-id="1">One</article>
 <article data-id="2">Two</article>

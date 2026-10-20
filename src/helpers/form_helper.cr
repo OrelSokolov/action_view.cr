@@ -26,23 +26,32 @@ module ActionView
       include TagHelper
       include FormTagHelper
 
+      # Rails 8.1 defaults; apps on load_defaults 6.1+/8.x set these to
+      # false/true respectively (local forms, generated ids).
+      class_property form_with_generates_remote_forms = true
+      class_property form_with_generates_ids = false
+
       # form_with url: "/x" do |f| ... end — capture-first: the block is
       # rendered into a string before the open tag so file_field can
-      # flip the multipart flag (enctype is the FIRST form attribute,
-      # oracle fw_file_multipart). Returns "" — the whole form goes to
-      # the output buffer in one piece.
+      # flip the multipart flag. Attribute order per Rails: user opts,
+      # enctype, action, accept-charset, [data-remote], method (oracle
+      # fw_local / fw_file_multipart). Returns "" — the whole form goes
+      # to the output buffer in one piece.
       def form_with(url : String? = nil, model : FormModel? = nil,
                     scope : String? = nil, **opts, &) : String
         scope = model.form_scope if model && !scope
         raise ArgumentError.new("form_with needs a url: or model:") unless url
         opts = __av_opts_to_h(opts)
         method = (opts.delete("method") || (model.try(&.form_persisted?) ? "patch" : "post")).to_s
-        builder = FormBuilder.new(self, scope || "", model)
+        builder = FormBuilder.new(self, scope || "", model,
+                                  emit_ids: FormHelper.form_with_generates_ids)
         body = capture { yield builder }
         enctype = builder.multipart? ? %( enctype="multipart/form-data") : ""
         __erb_out(String.build do |io|
-          io << %(<form#{enctype} action="#{HTML.escape(url)}" accept-charset="UTF-8"#{tag_options(opts)} data-remote="true" method="post">)
-          io << UTF8_ENROLLMENT
+          io << %(<form#{tag_options(opts)}#{enctype} action="#{HTML.escape(url)}" accept-charset="UTF-8")
+          io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
+          io << %( method="post">)
+          io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
           io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
           io << __csrf_token_field(url, method)
           io << body << "</form>"
@@ -57,8 +66,10 @@ module ActionView
         opts = __av_opts_to_h(opts)
         method = (opts.delete("method") || (model.try(&.form_persisted?) ? "patch" : "post")).to_s
         SafeString.new(String.build do |io|
-          io << %(<form action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8"#{tag_options(opts)} data-remote="true" method="post">)
-          io << UTF8_ENROLLMENT
+          io << %(<form#{tag_options(opts)} action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8")
+          io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
+          io << %( method="post">)
+          io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
           io << %(<input type="hidden" name="_method" value="#{method}" autocomplete="off" />) unless method == "post"
           io << __csrf_token_field(url.to_s, method)
         end)
@@ -105,23 +116,25 @@ module ActionView
         end
 
         private def name_of(attr : String) : String
-          "#{@scope}[#{attr}]"
+          @scope.empty? ? attr : "#{@scope}[#{attr}]"
         end
 
         # Public field id (sanitized), emitted even in form_with
-        # contexts where field ids are skipped (oracle ff_field_id).
+        # contexts where field ids are skipped (oracle ff_field_id);
+        # for scope-less builders (form_with url:) the bare attr.
         def field_id(attr : String | Symbol) : String
-          return "" if @scope.empty?
+          a = attr.to_s.chomp("?")
+          return @view.__av_sanitize_id(a) if @scope.empty?
           scope = @scope.gsub(/\]\[|[^-a-zA-Z0-9:.]/, "_").gsub(/_$/, "")
-          "#{scope}_#{attr.to_s.chomp("?")}"
+          "#{scope}_#{a}"
         end
 
-        # id attribute, emitted only in fields_for builders (form_with
-        # fields stay id-less). Same sanitization as Rails field_id:
-        # "user[posts_attributes][0]" + "title" →
-        # "user_posts_attributes_0_title".
+        # id attribute, emitted only when the builder generates ids
+        # (form_with: config-gated; fields_for: always). Same
+        # sanitization as Rails field_id: "user[posts_attributes][0]"
+        # + "title" → "user_posts_attributes_0_title".
         private def id_attr(attr : String) : String
-          return "" unless @emit_ids && !@scope.empty?
+          return "" unless @emit_ids
           %( id="#{field_id(attr)}")
         end
 
@@ -130,18 +143,21 @@ module ActionView
         end
 
         # Generic typed input — attribute order locked by the oracle
-        # (fw_typed_*): user opts, type, value, name, id. `value_first`
-        # moves the (defaulted) value before type (color_field quirk).
-        private def __ff_input(attr : String, type : String, value : String?,
+        # (fw_typed_*, fw_local): user opts (+size from maxlength),
+        # type, value, name, id. `value_first` moves the (defaulted)
+        # value before type (color_field / date-family quirk). A nil
+        # value omits the attribute (Rails TextField).
+        private def __ff_input(attr : String, type : String, field_value : String?,
                                *, value_first : Bool = false, **opts) : SafeString
           h = {} of String => AttrVal
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
+          h["size"] = h["maxlength"] if h["maxlength"]? && !h["size"]?
           if value_first
-            h["value"] = value unless h["value"]? || value.nil?
+            h["value"] = field_value unless h["value"]? || field_value.nil?
             h["type"] = type unless h["type"]?
           else
             h["type"] = type unless h["type"]?
-            h["value"] = value unless h["value"]? || value.nil?
+            h["value"] = field_value unless h["value"]? || field_value.nil?
           end
           h["name"] = name_of(attr)
           SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr)} />))
@@ -168,36 +184,46 @@ module ActionView
           end
         end
 
-        def text_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "text", value_of(attr.to_s), **opts)
+        # nil stays nil (attribute omitted), everything else to_s.
+        private def value_or_nil(attr : String) : String?
+          case v = raw_value(attr)
+          when Nil then nil
+          else           v.to_s
+          end
         end
 
+        def text_field(attr : String | Symbol, **opts) : SafeString
+          __ff_input(attr.to_s, "text", value_or_nil(attr.to_s), **opts)
+        end
+
+        # Rails PasswordField: the object's value is never echoed —
+        # value comes only from an explicit value: opt.
         def password_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "password", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "password", nil, **opts)
         end
 
         def email_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "email", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "email", value_or_nil(attr.to_s), **opts)
         end
 
         def search_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "search", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "search", value_or_nil(attr.to_s), **opts)
         end
 
         def telephone_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "tel", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "tel", value_or_nil(attr.to_s), **opts)
         end
 
         def url_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "url", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "url", value_or_nil(attr.to_s), **opts)
         end
 
         def number_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "number", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "number", value_or_nil(attr.to_s), **opts)
         end
 
         def range_field(attr : String | Symbol, **opts) : SafeString
-          __ff_input(attr.to_s, "range", value_of(attr.to_s), **opts)
+          __ff_input(attr.to_s, "range", value_or_nil(attr.to_s), **opts)
         end
 
         def date_field(attr : String | Symbol, **opts) : SafeString
@@ -471,13 +497,20 @@ module ActionView
           @nested_child_index[name] = (@nested_child_index[name]? || -1) + 1
         end
 
+        # `for` is emitted when the builder generates ids (Rails label
+        # respects skip_default_ids); opts render before it, as in
+        # label_tag.
+        private def label_for_attr(attr : String) : String
+          @emit_ids ? %( for="#{field_id(attr)}") : ""
+        end
+
         def label(attr : String | Symbol, text : String? = nil, **opts) : SafeString
-          SafeString.new(%(<label#{@view.tag_options(opts)}>#{HTML.escape(text || attr.to_s.gsub('_', ' ').capitalize)}</label>))
+          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s)}>#{HTML.escape(text || attr.to_s.gsub('_', ' ').capitalize)}</label>))
         end
 
         def label(attr : String | Symbol, **opts, &) : SafeString
           body = @view.capture { yield }
-          SafeString.new(%(<label#{@view.tag_options(opts)}>#{body}</label>))
+          SafeString.new(%(<label#{@view.tag_options(opts)}#{label_for_attr(attr.to_s)}>#{body}</label>))
         end
 
         # Default caption uses I18n model names in Rails ("Update Post");

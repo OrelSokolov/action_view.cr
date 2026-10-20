@@ -288,6 +288,27 @@ case_run("fs_collection_checks")   { tpl(%q{<%= form_with model: PSEL, url: "/po
 case_run("fs_collection_radios")   { tpl(%q{<%= form_with model: PSEL, url: "/posts" do |f| %><%= f.collection_radio_buttons :author_id, ROOMS, :id, :name %><% end %>}) }
 case_run("fs_weekday")             { tpl(%q{<%= form_with scope: "u", url: "/u" do |f| %><%= f.weekday_select :day %><% end %>}) }
 
+# --- app-config form semantics (load_defaults 6.1+: local forms,
+# --- no utf8 enrollment, generated ids) ----------------------------
+case_run("fw_local") do
+  ActionView::Helpers::FormHelper.form_with_generates_remote_forms = false
+  ActionView::Helpers::FormTagHelper.default_enforce_utf8 = false
+  ActionView::Helpers::FormHelper.form_with_generates_ids = true
+  tpl(%q{<%= form_with url: "/session", class: "flex flex-column gap" do |form| %><%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: "" %><%= form.password_field :password, required: true, class: "input", autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %><%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>Go<% end %><% end %>})
+ensure
+  ActionView::Helpers::FormHelper.form_with_generates_remote_forms = true
+  ActionView::Helpers::FormTagHelper.default_enforce_utf8 = true
+  ActionView::Helpers::FormHelper.form_with_generates_ids = false
+end
+case_run("fw_ids_model") do
+  ActionView::Helpers::FormHelper.form_with_generates_ids = true
+  tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_field :title %><%= f.label :title %><% end %>})
+ensure
+  ActionView::Helpers::FormHelper.form_with_generates_ids = false
+end
+case_run("ff_password")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.password_field :title %><% end %>}) }
+case_run("ff_text_nil")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_field :author_id %><% end %>}) }
+
 # --- Partials (on-disk fixtures in oracle/fixtures) ---------------
 # A second standalone view whose lookup paths point at the fixtures
 # dir, so partials resolve from disk exactly like a real app.

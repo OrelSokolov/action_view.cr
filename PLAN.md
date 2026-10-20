@@ -16,9 +16,10 @@ Rails): компилятор и rendering-pipeline вынесены в шард 
 настоящих vite_rails 3.0.19 / vite_ruby 3.9.2 — версий из
 Gemfile.lock qp2/website) и `oracle/vite_dev_cases.rb` →
 `oracle/vite_dev_expected.yml` (13 кейсов dev-режима), зеркало —
-`spec/vite_spec.cr`. Сюита — **211 examples, 0 failures** (151 + 29
+`spec/vite_spec.cr`. Сюита — **215 examples, 0 failures** (151 + 29
 ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a + 18 fo_/fs_-кейсов
-фаз 2/3.4, FORMS_SUPPORT 2026-10-20).
+фаз 2/3.4 + 4 конфиг-кейса fw_local/fw_ids_model/ff_password/
+ff_text_nil, FORMS_SUPPORT 2026-10-20).
 
 Формы, FORMS_SUPPORT (2026-10-20, v0.1.3 + v0.1.4):
 - фаза 1 (v0.1.3): file/time/datetime/datetime_local/month/week/phone
@@ -49,6 +50,15 @@ ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a + 18 fo_/fs_-
   именованным аргументом checked: (FormValue без массивов —
   отклонение); time_zone_select не портирован (нет TimeZone в
   active_support_cr)
+- конфиг семантики форм (v0.1.6, для фазы 5 — load_defaults-8.x
+  поведение): `form_with_generates_remote_forms` / `form_with_
+  generates_ids` (FormHelper) и `default_enforce_utf8`
+  (FormTagHelper) — class_property с дефолтами гема (true/false/true,
+  оракул остаётся на дефолтах); при выключении — локальные формы без
+  data-remote, без utf8-enrollment, ids полей; порядок атрибутов
+  form_with: user-opts, enctype, action, accept-charset, method;
+  label получает for при генерации ids; nil-value опускается,
+  password без value, size из maxlength
 
 fields_for + fragment cache (2026-10-05):
 - `fields_for` (view-level) и `FormBuilder#fields_for` — вложенные
