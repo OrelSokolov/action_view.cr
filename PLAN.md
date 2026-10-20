@@ -16,12 +16,26 @@ Rails): компилятор и rendering-pipeline вынесены в шард 
 настоящих vite_rails 3.0.19 / vite_ruby 3.9.2 — версий из
 Gemfile.lock qp2/website) и `oracle/vite_dev_cases.rb` →
 `oracle/vite_dev_expected.yml` (13 кейсов dev-режима), зеркало —
-`spec/vite_spec.cr`. Сюита — **180 examples, 0 failures** (151 + 29
-ft-кейсов FORMS_SUPPORT фазы 1, 2026-10-20: file/time/datetime/
-datetime_local/month/week/phone `*_tag` + `image_submit_tag`,
-`button_tag`/`label_tag` с блоком, merge-порядок атрибутов
-`check_box_tag`/`radio_button_tag` (`id: nil`, opts до `checked`),
-дашеризация вложенных data/aria-ключей; v0.1.3).
+`spec/vite_spec.cr`. Сюита — **193 examples, 0 failures** (151 + 29
+ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a, FORMS_SUPPORT
+2026-10-20).
+
+Формы, FORMS_SUPPORT (2026-10-20, v0.1.3 + v0.1.4):
+- фаза 1 (v0.1.3): file/time/datetime/datetime_local/month/week/phone
+  `*_tag` + `image_submit_tag`, `button_tag`/`label_tag` с блоком,
+  merge-порядок атрибутов `check_box_tag`/`radio_button_tag`
+  (`id: nil`, opts до `checked`), дашеризация вложенных data/aria-ключей
+- фаза 3 (v0.1.4): `form_with` capture-first (блок рендерится до
+  открывающего тега) + multipart от `file_field` (enctype — первый
+  атрибут); `form_with` без блока (без `</form>`); `method:` опция;
+  типизированные поля билдера (email/search/tel/url/number/range/
+  date/time/datetime/datetime_local/month/week/color — датовые и color
+  ставят value до type, Time форматируется ISO: %F, %H:%M:%S.%L, %FT%T,
+  %Y-%m, %G-W%V); `check_box` с checked/unchecked values (named-args
+  отклонение от позиционного хэша Rails) и `hidden:`; `file_field`;
+  порядок hidden_field (явный value: на второй позиции); `button`/
+  `label` с блоком; публичный `field_id`; id полей — последним
+  атрибутом
 
 fields_for + fragment cache (2026-10-05):
 - `fields_for` (view-level) и `FormBuilder#fields_for` — вложенные

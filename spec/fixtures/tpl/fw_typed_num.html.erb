@@ -1,0 +1,1 @@
+<%= form_with model: post, url: "/posts" do |f| %><%= f.number_field :visits %><%= f.range_field :visits, min: 0, max: 9 %><% end %>

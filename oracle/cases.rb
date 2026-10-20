@@ -74,7 +74,7 @@ end
 
 class PostModel
   include ActiveModel::Model
-  attr_accessor :id, :title, :body, :published, :_destroy
+  attr_accessor :id, :title, :body, :published, :_destroy, :visits, :due
   def self.model_name
     ActiveModel::Name.new(self, nil, "Post")
   end
@@ -230,7 +230,7 @@ case_run("ft_options_selected_array") { options_for_select([["A", 1], ["B", 2]],
 case_run("ft_label_block")       { tpl(%q{<%= label_tag "name", class: "l" do %>Text<% end %>}) }
 
 # --- FormHelper / FormBuilder ------------------------------------
-POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true)
+POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true, visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
 
 case_run("fw_url")              { tpl(%q{<%= form_with url: "/x" do |f| %>B<% end %>}) }
 case_run("fw_model_new")        { tpl(%q{<%= form_with model: PostModel.new(id: nil, title: "t"), url: "/posts" do |f| %><%= f.text_field :title %><% end %>}) }
@@ -238,6 +238,21 @@ case_run("fw_model")            { tpl(%q{<%= form_with model: POST, url: "/posts
 case_run("fw_label")            { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.label :title %><% end %>}) }
 case_run("fw_fields")           { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.hidden_field :id %><% end %>}) }
 case_run("fw_field_name")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.field_name(:title) %><% end %>}) }
+
+# --- FormHelper / FormBuilder (FORMS_SUPPORT phase 3 + 4a) --------
+case_run("fw_file_multipart")   { tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.file_field :avatar, class: "input" %><% end %>}) }
+case_run("fw_check_values")     { tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.check_box :role, {class: "sw"}, "administrator", "member" %><% end %>}) }
+case_run("fw_check_values_checked") { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.check_box :published, {class: "sw"}, "true", "false" %><% end %>}) }
+case_run("fw_no_block")         { tpl(%q{<%= form_with url: "/u/1", method: :delete %>}) }
+case_run("fw_typed_text")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.email_field :title %><%= f.search_field :title %><%= f.telephone_field :title %><%= f.url_field :title %><%= f.color_field :title %><% end %>}) }
+case_run("fw_typed_num")        { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.number_field :visits %><%= f.range_field :visits, min: 0, max: 9 %><% end %>}) }
+case_run("fw_typed_date")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.date_field :due %><%= f.time_field :due %><%= f.datetime_field :due %><%= f.datetime_local_field :due %><%= f.month_field :due %><%= f.week_field :due %><% end %>}) }
+case_run("ff_radio_opts")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.radio_button :title, "Hi", class: "r" %><%= f.radio_button :title, "No" %><% end %>}) }
+case_run("ff_button")           { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.button "Go" %><% end %>}) }
+case_run("ff_button_block")     { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.button class: "b" do %>Block<% end %><% end %>}) }
+case_run("ff_label_block")      { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.label(:title) { "Custom" } %><% end %>}) }
+case_run("ff_field_id")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.field_id :title %><% end %>}) }
+case_run("ff_hidden_value")     { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.hidden_field :title, value: "X" %><% end %>}) }
 
 # --- Partials (on-disk fixtures in oracle/fixtures) ---------------
 # A second standalone view whose lookup paths point at the fixtures

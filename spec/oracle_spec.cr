@@ -28,8 +28,11 @@ class PostModel
   property title : String
   property body : String
   property published : Bool
+  property visits : Int32?
+  property due : Time?
 
-  def initialize(@id = nil, @title = "", @body = "", @published = false)
+  def initialize(@id = nil, @title = "", @body = "", @published = false,
+                 @visits = nil, @due = nil)
   end
 
   def form_scope : String
@@ -42,6 +45,8 @@ class PostModel
     attrs["title"] = @title
     attrs["body"] = @body
     attrs["published"] = @published
+    attrs["visits"] = @visits if @visits
+    attrs["due"] = @due if @due
     attrs
   end
 
@@ -88,7 +93,8 @@ class OracleCtx
 end
 
 CTX = OracleCtx.new
-POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true)
+POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true,
+                     visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
 
 # --- template-compiled view ---------------------------------------
 class TplView
@@ -117,6 +123,19 @@ class TplView
   compile_template "tpl_form_tag_method", "#{__DIR__}/fixtures/tpl/form_tag_method.html.erb"
   compile_template "tpl_button_block", "#{__DIR__}/fixtures/tpl/button_block.html.erb"
   compile_template "tpl_label_block", "#{__DIR__}/fixtures/tpl/label_block.html.erb"
+  compile_template "tpl_fw_file_multipart", "#{__DIR__}/fixtures/tpl/fw_file_multipart.html.erb"
+  compile_template "tpl_fw_check_values", "#{__DIR__}/fixtures/tpl/fw_check_values.html.erb"
+  compile_template "tpl_fw_check_values_checked", "#{__DIR__}/fixtures/tpl/fw_check_values_checked.html.erb"
+  compile_template "tpl_fw_no_block", "#{__DIR__}/fixtures/tpl/fw_no_block.html.erb"
+  compile_template "tpl_fw_typed_text", "#{__DIR__}/fixtures/tpl/fw_typed_text.html.erb"
+  compile_template "tpl_fw_typed_num", "#{__DIR__}/fixtures/tpl/fw_typed_num.html.erb"
+  compile_template "tpl_fw_typed_date", "#{__DIR__}/fixtures/tpl/fw_typed_date.html.erb"
+  compile_template "tpl_ff_radio_opts", "#{__DIR__}/fixtures/tpl/ff_radio_opts.html.erb"
+  compile_template "tpl_ff_button", "#{__DIR__}/fixtures/tpl/ff_button.html.erb"
+  compile_template "tpl_ff_button_block", "#{__DIR__}/fixtures/tpl/ff_button_block.html.erb"
+  compile_template "tpl_ff_label_block", "#{__DIR__}/fixtures/tpl/ff_label_block.html.erb"
+  compile_template "tpl_ff_field_id", "#{__DIR__}/fixtures/tpl/ff_field_id.html.erb"
+  compile_template "tpl_ff_hidden_value", "#{__DIR__}/fixtures/tpl/ff_hidden_value.html.erb"
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
@@ -310,6 +329,20 @@ CASES = {
   "fw_label"       => -> { VIEW.tpl_fw_label.to_s },
   "fw_fields"      => -> { VIEW.tpl_fw_fields.to_s },
   "fw_field_name"  => -> { VIEW.tpl_fw_field_name.to_s },
+  # --- form_with / FormBuilder (FORMS_SUPPORT phase 3 + 4a) ---
+  "fw_file_multipart"       => -> { VIEW.tpl_fw_file_multipart.to_s },
+  "fw_check_values"         => -> { VIEW.tpl_fw_check_values.to_s },
+  "fw_check_values_checked" => -> { VIEW.tpl_fw_check_values_checked.to_s },
+  "fw_no_block"             => -> { VIEW.tpl_fw_no_block.to_s },
+  "fw_typed_text"           => -> { VIEW.tpl_fw_typed_text.to_s },
+  "fw_typed_num"            => -> { VIEW.tpl_fw_typed_num.to_s },
+  "fw_typed_date"           => -> { VIEW.tpl_fw_typed_date.to_s },
+  "ff_radio_opts"           => -> { VIEW.tpl_ff_radio_opts.to_s },
+  "ff_button"               => -> { VIEW.tpl_ff_button.to_s },
+  "ff_button_block"         => -> { VIEW.tpl_ff_button_block.to_s },
+  "ff_label_block"          => -> { VIEW.tpl_ff_label_block.to_s },
+  "ff_field_id"             => -> { VIEW.tpl_ff_field_id.to_s },
+  "ff_hidden_value"         => -> { VIEW.tpl_ff_hidden_value.to_s },
   # --- capture ---
   "cap_content_for" => -> { VIEW.tpl_content_for.to_s },
   # --- fields_for ---
