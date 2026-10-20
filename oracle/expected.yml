@@ -153,6 +153,45 @@ ff_button_block	<form action="/posts" accept-charset="UTF-8" data-remote="true" 
 ff_label_block	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><label>Custom</label></form>
 ff_field_id	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" />post_title</form>
 ff_hidden_value	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input autocomplete="off" value="X" type="hidden" name="post[title]" /></form>
+fo_from_collection	<option value="1">Alpha</option>
+<option selected="selected" value="2">Beta</option>
+fo_from_collection_none	<option value="1">Alpha</option>
+<option value="2">Beta</option>
+fo_from_collection_dis	<option disabled="disabled" value="1">Alpha</option>
+<option selected="selected" value="2">Beta</option>
+fo_grouped	<optgroup label="G"><option value="1">A</option>
+<option selected="selected" value="2">B</option></optgroup><optgroup label="H"><option value="C">C</option></optgroup>
+fo_grouped_prompt	<option value="">Pick</option><optgroup label="G"><option value="1">A</option></optgroup>
+fo_option_groups	<optgroup label="Africa"><option value="1">Egypt</option>
+<option value="4">Rwanda</option></optgroup><optgroup label="Asia"><option selected="selected" value="3">China</option>
+<option value="12">India</option></optgroup>
+fs_select	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[title]"><option selected="selected" value="Hi">One</option>
+<option value="No">Two</option></select></form>
+fs_select_include_blank	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[title]"><option value="" label=" "></option>
+<option selected="selected" value="Hi">One</option></select></form>
+fs_select_prompt	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[title]"><option selected="selected" value="Hi">One</option></select></form>
+fs_select_html_opts	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select class="s" name="post[title]"><option selected="selected" value="Hi">One</option></select></form>
+fs_select_multiple	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input name="post[title][]" type="hidden" value="" autocomplete="off" /><select multiple="multiple" name="post[title][]"><option selected="selected" value="Hi">One</option>
+<option value="No">Two</option></select></form>
+fs_collection_select	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[author_id]"><option value="1">Alpha</option>
+<option value="2">Beta</option></select></form>
+fs_collection_select_sel	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[author_id]"><option value="1">Alpha</option>
+<option selected="selected" value="2">Beta</option></select></form>
+fs_collection_prompt	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[author_id]"><option value="">Please select</option>
+<option value="1">Alpha</option>
+<option value="2">Beta</option></select></form>
+fs_grouped_select	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><select name="post[author_id]"><optgroup label="Africa"><option value="1">Egypt</option>
+<option value="4">Rwanda</option></optgroup><optgroup label="Asia"><option value="3">China</option>
+<option value="12">India</option></optgroup></select></form>
+fs_collection_checks	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="hidden" name="post[author_ids][]" value="" autocomplete="off" /><input type="checkbox" value="1" name="post[author_ids][]" id="post_author_ids_1" /><label for="post_author_ids_1">Alpha</label><input type="checkbox" value="2" name="post[author_ids][]" id="post_author_ids_2" /><label for="post_author_ids_2">Beta</label></form>
+fs_collection_radios	<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="_method" value="patch" autocomplete="off" /><input type="hidden" name="post[author_id]" value="" autocomplete="off" /><input type="radio" value="1" name="post[author_id]" id="post_author_id_1" /><label for="post_author_id_1">Alpha</label><input type="radio" value="2" checked="checked" name="post[author_id]" id="post_author_id_2" /><label for="post_author_id_2">Beta</label></form>
+fs_weekday	<form action="/u" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><select name="u[day]"><option value="Monday">Monday</option>
+<option value="Tuesday">Tuesday</option>
+<option value="Wednesday">Wednesday</option>
+<option value="Thursday">Thursday</option>
+<option value="Friday">Friday</option>
+<option value="Saturday">Saturday</option>
+<option value="Sunday">Sunday</option></select></form>
 prt_locals	<article data-id="7">Hi</article>
 prt_collection	<article data-id="1">One</article>
 <article data-id="2">Two</article>

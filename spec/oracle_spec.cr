@@ -30,9 +30,10 @@ class PostModel
   property published : Bool
   property visits : Int32?
   property due : Time?
+  property author_id : Int32?
 
   def initialize(@id = nil, @title = "", @body = "", @published = false,
-                 @visits = nil, @due = nil)
+                 @visits = nil, @due = nil, @author_id = nil)
   end
 
   def form_scope : String
@@ -47,6 +48,7 @@ class PostModel
     attrs["published"] = @published
     attrs["visits"] = @visits if @visits
     attrs["due"] = @due if @due
+    attrs["author_id"] = @author_id if @author_id
     attrs
   end
 
@@ -87,6 +89,45 @@ class UserModel
   end
 end
 
+# Select-collection fixtures (fo_*/fs_* cases): the port's FormOption /
+# GroupOption interfaces stand in for Rails' value_method/text_method.
+class RoomOpt
+  include ActionView::FormOption
+
+  def initialize(@id : Int32, @name : String)
+  end
+
+  def option_value : String
+    @id.to_s
+  end
+
+  def option_text : String
+    @name
+  end
+end
+
+class ContinentOpt
+  include ActionView::GroupOption
+
+  def initialize(@name : String, @countries : Array(ActionView::FormOption) =
+                   [] of ActionView::FormOption)
+  end
+
+  def group_label : String
+    @name
+  end
+
+  def group_options : Array(ActionView::FormOption)
+    @countries
+  end
+end
+
+ROOMS = [RoomOpt.new(1, "Alpha"), RoomOpt.new(2, "Beta")] of ActionView::FormOption
+CONTINENTS = [
+  ContinentOpt.new("Africa", [RoomOpt.new(1, "Egypt"), RoomOpt.new(4, "Rwanda")] of ActionView::FormOption),
+  ContinentOpt.new("Asia",   [RoomOpt.new(3, "China"), RoomOpt.new(12, "India")] of ActionView::FormOption),
+] of ActionView::GroupOption
+
 # --- direct helper context ----------------------------------------
 class OracleCtx
   include ActionView::Helpers
@@ -95,6 +136,7 @@ end
 CTX = OracleCtx.new
 POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true,
                      visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
+PSEL = PostModel.new(id: 8, title: "T", author_id: 2)
 
 # --- template-compiled view ---------------------------------------
 class TplView
@@ -107,8 +149,13 @@ class TplView
   getter np2 : PostModel
   getter post55 : PostModel
   getter c1 : PostModel
+  getter psel : PostModel
+  getter rooms : Array(ActionView::FormOption)
+  getter continents : Array(ActionView::GroupOption)
 
-  def initialize(@post, @post_new, @user, @np1, @np2, @post55, @c1)
+  def initialize(@post, @post_new, @user, @np1, @np2, @post55, @c1, @psel,
+                 @rooms : Array(ActionView::FormOption) = ROOMS,
+                 @continents : Array(ActionView::GroupOption) = CONTINENTS)
   end
 
   compile_template "tpl_erb_escapes", "#{__DIR__}/fixtures/tpl/erb_escapes.html.erb"
@@ -136,6 +183,18 @@ class TplView
   compile_template "tpl_ff_label_block", "#{__DIR__}/fixtures/tpl/ff_label_block.html.erb"
   compile_template "tpl_ff_field_id", "#{__DIR__}/fixtures/tpl/ff_field_id.html.erb"
   compile_template "tpl_ff_hidden_value", "#{__DIR__}/fixtures/tpl/ff_hidden_value.html.erb"
+  compile_template "tpl_fs_select", "#{__DIR__}/fixtures/tpl/fs_select.html.erb"
+  compile_template "tpl_fs_select_include_blank", "#{__DIR__}/fixtures/tpl/fs_select_include_blank.html.erb"
+  compile_template "tpl_fs_select_prompt", "#{__DIR__}/fixtures/tpl/fs_select_prompt.html.erb"
+  compile_template "tpl_fs_select_html_opts", "#{__DIR__}/fixtures/tpl/fs_select_html_opts.html.erb"
+  compile_template "tpl_fs_select_multiple", "#{__DIR__}/fixtures/tpl/fs_select_multiple.html.erb"
+  compile_template "tpl_fs_collection_select", "#{__DIR__}/fixtures/tpl/fs_collection_select.html.erb"
+  compile_template "tpl_fs_collection_select_sel", "#{__DIR__}/fixtures/tpl/fs_collection_select_sel.html.erb"
+  compile_template "tpl_fs_collection_prompt", "#{__DIR__}/fixtures/tpl/fs_collection_prompt.html.erb"
+  compile_template "tpl_fs_grouped_select", "#{__DIR__}/fixtures/tpl/fs_grouped_select.html.erb"
+  compile_template "tpl_fs_collection_checks", "#{__DIR__}/fixtures/tpl/fs_collection_checks.html.erb"
+  compile_template "tpl_fs_collection_radios", "#{__DIR__}/fixtures/tpl/fs_collection_radios.html.erb"
+  compile_template "tpl_fs_weekday", "#{__DIR__}/fixtures/tpl/fs_weekday.html.erb"
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
@@ -169,7 +228,7 @@ U = UserModel.new(id: 5, name: "Oleg")
 U.posts << NP1
 U.posts << NP2
 
-VIEW = TplView.new(POST, PostModel.new(title: "t"), U, NP1, NP2, POST55, C1)
+VIEW = TplView.new(POST, PostModel.new(title: "t"), U, NP1, NP2, POST55, C1, PSEL)
 
 # --- partial-compiled view ----------------------------------------
 class PartialView
@@ -343,6 +402,25 @@ CASES = {
   "ff_label_block"          => -> { VIEW.tpl_ff_label_block.to_s },
   "ff_field_id"             => -> { VIEW.tpl_ff_field_id.to_s },
   "ff_hidden_value"         => -> { VIEW.tpl_ff_hidden_value.to_s },
+  # --- FormOptionsHelper + select builders (phase 2 + 3.4) ---
+  "fo_from_collection"      => -> { CTX.options_from_collection_for_select(ROOMS, 2).to_s },
+  "fo_from_collection_none" => -> { CTX.options_from_collection_for_select(ROOMS).to_s },
+  "fo_from_collection_dis"  => -> { CTX.options_from_collection_for_select(ROOMS, 2, disabled: 1).to_s },
+  "fo_grouped"              => -> { CTX.grouped_options_for_select([{"G", [{"A", 1}, {"B", 2}] of (Tuple(String, Int32) | String)}, {"H", ["C"] of (Tuple(String, Int32) | String)}], 2).to_s },
+  "fo_grouped_prompt"       => -> { CTX.grouped_options_for_select([{"G", [{"A", 1}] of (Tuple(String, Int32) | String)}], prompt: "Pick").to_s },
+  "fo_option_groups"        => -> { CTX.option_groups_from_collection_for_select(CONTINENTS, 3).to_s },
+  "fs_select"               => -> { VIEW.tpl_fs_select.to_s },
+  "fs_select_include_blank" => -> { VIEW.tpl_fs_select_include_blank.to_s },
+  "fs_select_prompt"        => -> { VIEW.tpl_fs_select_prompt.to_s },
+  "fs_select_html_opts"     => -> { VIEW.tpl_fs_select_html_opts.to_s },
+  "fs_select_multiple"      => -> { VIEW.tpl_fs_select_multiple.to_s },
+  "fs_collection_select"    => -> { VIEW.tpl_fs_collection_select.to_s },
+  "fs_collection_select_sel" => -> { VIEW.tpl_fs_collection_select_sel.to_s },
+  "fs_collection_prompt"    => -> { VIEW.tpl_fs_collection_prompt.to_s },
+  "fs_grouped_select"       => -> { VIEW.tpl_fs_grouped_select.to_s },
+  "fs_collection_checks"    => -> { VIEW.tpl_fs_collection_checks.to_s },
+  "fs_collection_radios"    => -> { VIEW.tpl_fs_collection_radios.to_s },
+  "fs_weekday"              => -> { VIEW.tpl_fs_weekday.to_s },
   # --- capture ---
   "cap_content_for" => -> { VIEW.tpl_content_for.to_s },
   # --- fields_for ---

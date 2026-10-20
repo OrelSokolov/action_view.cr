@@ -9,6 +9,7 @@ module ActionView
   module Helpers
     module FormTagHelper
       include TagHelper
+      include FormOptionsHelper
 
       # No forgery layer in plain view contexts; overridden by
       # RequestForgeryProtection in controllers.
@@ -24,7 +25,7 @@ module ActionView
 
       UTF8_ENROLLMENT = %(<input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" />)
 
-      private def __av_sanitize_id(name : String) : String
+      def __av_sanitize_id(name : String) : String
         name.delete(']').chars.map { |c|
           c.alphanumeric? || "-.:".includes?(c) ? c : "_"
         }.join
@@ -181,15 +182,8 @@ module ActionView
       end
 
       # --- select ----------------------------------------------------
-      def options_for_select(container : Array, selected : String | Int | Array(String) | Array(Int) | Nil = nil) : SafeString
-        selected_list = selected.is_a?(Array) ? selected.map(&.to_s) : (selected ? [selected.to_s] : [] of String)
-        SafeString.new(container.map { |item|
-          label, value = item.is_a?(Tuple) || item.is_a?(Array) ? {item[0].to_s, item[1].to_s} : {item.to_s, item.to_s}
-          sel = selected_list.includes?(value) ? %( selected="selected") : ""
-          %(<option#{sel} value="#{HTML.escape(value)}">#{HTML.escape(label)}</option>)
-        }.join("\n"))
-      end
-
+      # options_for_select lives in FormOptionsHelper (as in Rails),
+      # brought in through the include chain.
       def select_tag(name : String, option_tags : String | SafeString | Nil = nil, **opts) : SafeString
         opts = __av_opts_to_h(opts)
         html_name = opts["multiple"]? ? "#{name}[]" : name

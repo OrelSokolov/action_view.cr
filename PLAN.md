@@ -16,9 +16,9 @@ Rails): компилятор и rendering-pipeline вынесены в шард 
 настоящих vite_rails 3.0.19 / vite_ruby 3.9.2 — версий из
 Gemfile.lock qp2/website) и `oracle/vite_dev_cases.rb` →
 `oracle/vite_dev_expected.yml` (13 кейсов dev-режима), зеркало —
-`spec/vite_spec.cr`. Сюита — **193 examples, 0 failures** (151 + 29
-ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a, FORMS_SUPPORT
-2026-10-20).
+`spec/vite_spec.cr`. Сюита — **211 examples, 0 failures** (151 + 29
+ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a + 18 fo_/fs_-кейсов
+фаз 2/3.4, FORMS_SUPPORT 2026-10-20).
 
 Формы, FORMS_SUPPORT (2026-10-20, v0.1.3 + v0.1.4):
 - фаза 1 (v0.1.3): file/time/datetime/datetime_local/month/week/phone
@@ -36,6 +36,19 @@ ft-кейсов фазы 1 + 13 fw_/ff_-кейсов фазы 3/4a, FORMS_SUPPOR
   порядок hidden_field (явный value: на второй позиции); `button`/
   `label` с блоком; публичный `field_id`; id полей — последним
   атрибутом
+- фаза 2 + 3.4 (v0.1.5): FormOptionsHelper (options_for_select c
+  disabled, options_from_collection_for_select,
+  option_groups_from_collection_for_select, grouped_options_for_select
+  c prompt) — коллекции через интерфейсы FormOption/GroupOption вместо
+  symbol-методов Rails (отклонение); select-билдеры: select /
+  collection_select / grouped_collection_select / weekday_select
+  (include_blank → <option value="" label=" ">, prompt только при
+  пустом значении, multiple → name[] + скрытый companion впереди),
+  collection_check_boxes / collection_radio_buttons (скрытый
+  companion, форс-ids, label for); checked-значения чекбоксов —
+  именованным аргументом checked: (FormValue без массивов —
+  отклонение); time_zone_select не портирован (нет TimeZone в
+  active_support_cr)
 
 fields_for + fragment cache (2026-10-05):
 - `fields_for` (view-level) и `FormBuilder#fields_for` — вложенные

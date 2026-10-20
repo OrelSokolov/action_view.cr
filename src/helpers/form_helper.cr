@@ -279,6 +279,160 @@ module ActionView
           SafeString.new(%(<input#{@view.tag_options(opts)} type="radio" value="#{HTML.escape(tag_value)}"#{checked} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s)} />))
         end
 
+        # --- select family (FORMS_SUPPORT phase 2 + 3.4) ---------------
+        # Rails separates options/html_options as two positional hashes;
+        # Crystal named args carry both — known form options are consumed
+        # here, the rest go to the <select> tag.
+
+        private def __fs_prompt_text(prompt : String | Bool) : String
+          prompt == true ? "Please select" : prompt.to_s
+        end
+
+        # selected: explicit, else the model value ("" when nil — Rails
+        # Tags::Select), coerced into the SelectValue union.
+        private def __fs_selected(attr : String, selected : FormOptionsHelper::SelectValue?) : Tuple(FormOptionsHelper::SelectValue, Bool)
+          value = selected || begin
+            v = raw_value(attr)
+            v.nil? ? "" : v
+          end
+          coerced = case value
+                    when String, Int32, Int64 then value
+                    else                           value.to_s
+                    end
+          {coerced, coerced.to_s.strip.empty?}
+        end
+
+        # include_blank / prompt prepending (SelectRenderer#add_options):
+        # blank → <option value="" label=" "></option>, prompt only when
+        # the field value is blank — both joined with "\n".
+        private def __fs_add_options(option_tags : String | SafeString, include_blank : String | Bool | Nil,
+                                     prompt : String | Bool | Nil, value_blank : Bool) : String
+          tags = option_tags.to_s
+          if include_blank
+            content = include_blank.is_a?(String) ? include_blank : nil
+            label = content ? nil : " "
+            blank = content ? %(<option value="">#{HTML.escape(content)}</option>) : %(<option value="" label=" "></option>)
+            tags = "#{blank}\n#{tags}"
+          end
+          if value_blank && prompt
+            tags = %(<option value="">#{HTML.escape(__fs_prompt_text(prompt))}</option>) + "\n" + tags
+          end
+          tags
+        end
+
+        # <select> content: user opts, multiple, name (id last), with the
+        # multiple hidden companion prepended — attribute orders locked
+        # by oracle fs_select_*.
+        private def __fs_select_tag(attr : String, option_tags : String, *, multiple : Bool,
+                                    include_hidden : Bool, **html_opts) : SafeString
+          h = {} of String => AttrVal
+          @view.__av_opts_to_h(html_opts).each { |k, v| h[k] = v }
+          h["multiple"] = true if multiple
+          name = name_of(attr)
+          html_name = multiple ? "#{name}[]" : name
+          h["name"] = html_name
+          select_html = %(<select#{@view.tag_options(h)}#{id_attr(attr)}>#{option_tags}</select>)
+          hidden = multiple && include_hidden ? %(<input name="#{html_name}" type="hidden" value="" autocomplete="off" />) : ""
+          SafeString.new(hidden + select_html)
+        end
+
+        def select(attr : String | Symbol, choices : Array, *,
+                   selected : FormOptionsHelper::SelectValue? = nil,
+                   disabled : FormOptionsHelper::SelectValue? = nil,
+                   include_blank : String | Bool | Nil = nil,
+                   prompt : String | Bool | Nil = nil,
+                   multiple : Bool = false,
+                   include_hidden : Bool = true,
+                   **html_opts) : SafeString
+          sel, blank = __fs_selected(attr.to_s, selected)
+          tags = @view.options_for_select(choices, sel, disabled)
+          tags = __fs_add_options(tags, include_blank, prompt, blank)
+          __fs_select_tag(attr.to_s, tags, **html_opts, multiple: multiple,
+                          include_hidden: include_hidden)
+        end
+
+        def collection_select(attr : String | Symbol, collection : Array(FormOption), *,
+                              selected : FormOptionsHelper::SelectValue? = nil,
+                              disabled : FormOptionsHelper::SelectValue? = nil,
+                              include_blank : String | Bool | Nil = nil,
+                              prompt : String | Bool | Nil = nil,
+                              multiple : Bool = false,
+                              include_hidden : Bool = true,
+                              **html_opts) : SafeString
+          sel, blank = __fs_selected(attr.to_s, selected)
+          tags = @view.options_from_collection_for_select(collection, sel, disabled)
+          tags = __fs_add_options(tags, include_blank, prompt, blank)
+          __fs_select_tag(attr.to_s, tags, **html_opts, multiple: multiple,
+                          include_hidden: include_hidden)
+        end
+
+        def grouped_collection_select(attr : String | Symbol, groups : Array(GroupOption), *,
+                                      selected : FormOptionsHelper::SelectValue? = nil,
+                                      include_blank : String | Bool | Nil = nil,
+                                      prompt : String | Bool | Nil = nil,
+                                      multiple : Bool = false,
+                                      include_hidden : Bool = true,
+                                      **html_opts) : SafeString
+          sel, blank = __fs_selected(attr.to_s, selected)
+          tags = @view.option_groups_from_collection_for_select(groups, sel)
+          tags = __fs_add_options(tags, include_blank, prompt, blank)
+          __fs_select_tag(attr.to_s, tags, **html_opts, multiple: multiple,
+                          include_hidden: include_hidden)
+        end
+
+        WEEKDAYS_FROM_MONDAY = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                                "Friday", "Saturday", "Sunday"]
+
+        def weekday_select(attr : String | Symbol, *,
+                           selected : String? = nil,
+                           multiple : Bool = false,
+                           include_hidden : Bool = true,
+                           **html_opts) : SafeString
+          tags = WEEKDAYS_FROM_MONDAY.map { |d|
+            sel = selected == d ? %( selected="selected") : ""
+            %(<option value="#{d}"#{sel}>#{d}</option>)
+          }.join("\n")
+          __fs_select_tag(attr.to_s, tags, **html_opts, multiple: multiple,
+                          include_hidden: include_hidden)
+        end
+
+        # Hidden companion (type, name, value, autocomplete — hidden_field_tag
+        # with id nil) prepended, then checkbox + label per item with forced
+        # ids (Rails skip_default_ids = false). Checked values come from the
+        # `checked:` arg — FormValue has no array attributes (documented
+        # deviation from Rails' object[method] arrays).
+        def collection_check_boxes(attr : String | Symbol, collection : Array(FormOption), *,
+                                   checked : Array(String) | Array(Int32) | Nil = nil,
+                                   include_hidden : Bool = true,
+                                   **html_opts) : SafeString
+          name = "#{name_of(attr.to_s)}[]"
+          base_id = field_id(attr)
+          hidden = include_hidden ? %(<input type="hidden" name="#{name}" value="" autocomplete="off" />) : ""
+          checked_list = checked.try(&.map(&.to_s)) || [] of String
+          body = collection.map { |e|
+            v = e.option_value
+            id = "#{base_id}_#{@view.__av_sanitize_id(v)}"
+            chk = checked_list.includes?(v) ? %( checked="checked") : ""
+            %(<input type="checkbox" value="#{HTML.escape(v)}"#{chk} name="#{name}" id="#{id}" /><label for="#{id}">#{HTML.escape(e.option_text)}</label>)
+          }.join
+          SafeString.new(hidden + body)
+        end
+
+        def collection_radio_buttons(attr : String | Symbol, collection : Array(FormOption),
+                                     **html_opts) : SafeString
+          name = name_of(attr.to_s)
+          base_id = field_id(attr)
+          current = raw_value(attr.to_s)
+          hidden = %(<input type="hidden" name="#{name}" value="" autocomplete="off" />)
+          body = collection.map { |e|
+            v = e.option_value
+            id = "#{base_id}_#{@view.__av_sanitize_id(v)}"
+            chk = current && current.to_s == v ? %( checked="checked") : ""
+            %(<input type="radio" value="#{HTML.escape(v)}"#{chk} name="#{name}" id="#{id}" /><label for="#{id}">#{HTML.escape(e.option_text)}</label>)
+          }.join
+          SafeString.new(hidden + body)
+        end
+
         def text_area(attr : String | Symbol, **opts) : SafeString
           SafeString.new(%(<textarea name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s)}#{@view.tag_options(opts)}>\n#{HTML.escape(value_of(attr.to_s))}</textarea>))
         end

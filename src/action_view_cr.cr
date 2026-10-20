@@ -13,6 +13,7 @@ require "./helpers/text_helper"
 require "./helpers/url_helper"
 require "./helpers/asset_tag_helper"
 require "./helpers/embed_file_helper"
+require "./helpers/form_options_helper"
 require "./helpers/form_tag_helper"
 require "./helpers/form_helper"
 require "./helpers/cache_helper"
@@ -43,6 +44,7 @@ module ActionView
     include AssetTagHelper
     include EmbedFileHelper
     include FormTagHelper
+    include FormOptionsHelper
     include FormHelper
     include CacheHelper
     include CsrfHelper

@@ -14,6 +14,7 @@ gem "actionview", "= 8.1.4"
 require "action_view"
 require "active_model"
 require "active_support/cache/memory_store"
+require "active_support/core_ext/date/calculations"
 
 def render(v)
   case v
@@ -68,13 +69,16 @@ end
   select_tag options_for_select
   file_field_tag time_field_tag datetime_field_tag datetime_local_field_tag
   month_field_tag week_field_tag phone_field_tag image_submit_tag
+  options_from_collection_for_select grouped_options_for_select
+  option_groups_from_collection_for_select
 ].each do |m|
   define_method(m) { |*a, **k, &b| CTX.public_send(m, *a, **k, &b) }
 end
 
 class PostModel
   include ActiveModel::Model
-  attr_accessor :id, :title, :body, :published, :_destroy, :visits, :due
+  attr_accessor :id, :title, :body, :published, :_destroy, :visits, :due,
+                :author_id, :author_ids
   def self.model_name
     ActiveModel::Name.new(self, nil, "Post")
   end
@@ -232,6 +236,16 @@ case_run("ft_label_block")       { tpl(%q{<%= label_tag "name", class: "l" do %>
 # --- FormHelper / FormBuilder ------------------------------------
 POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true, visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
 
+# Collections for FormOptionsHelper (phase 2) / select builders (3.4).
+Room      = Struct.new(:id, :name)
+Continent = Struct.new(:name, :countries)
+ROOMS = [Room.new(1, "Alpha"), Room.new(2, "Beta")]
+CONTINENTS = [
+  Continent.new("Africa", [Room.new(1, "Egypt"), Room.new(4, "Rwanda")]),
+  Continent.new("Asia",   [Room.new(3, "China"), Room.new(12, "India")]),
+]
+PSEL = PostModel.new(id: 8, title: "T", author_id: 2, author_ids: [12])
+
 case_run("fw_url")              { tpl(%q{<%= form_with url: "/x" do |f| %>B<% end %>}) }
 case_run("fw_model_new")        { tpl(%q{<%= form_with model: PostModel.new(id: nil, title: "t"), url: "/posts" do |f| %><%= f.text_field :title %><% end %>}) }
 case_run("fw_model")            { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_field :title %><%= f.text_area :body %><%= f.check_box :published %><%= f.submit "Go" %><% end %>}) }
@@ -253,6 +267,26 @@ case_run("ff_button_block")     { tpl(%q{<%= form_with model: POST, url: "/posts
 case_run("ff_label_block")      { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.label(:title) { "Custom" } %><% end %>}) }
 case_run("ff_field_id")         { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.field_id :title %><% end %>}) }
 case_run("ff_hidden_value")     { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.hidden_field :title, value: "X" %><% end %>}) }
+
+# --- FormOptionsHelper + select builders (FORMS_SUPPORT phase 2 + 3.4)
+case_run("fo_from_collection")     { options_from_collection_for_select(ROOMS, :id, :name, 2) }
+case_run("fo_from_collection_none"){ options_from_collection_for_select(ROOMS, :id, :name) }
+case_run("fo_from_collection_dis") { options_from_collection_for_select(ROOMS, :id, :name, {selected: 2, disabled: 1}) }
+case_run("fo_grouped")             { grouped_options_for_select({"G" => [["A", 1], ["B", 2]], "H" => ["C"]}, 2) }
+case_run("fo_grouped_prompt")      { grouped_options_for_select({"G" => [["A", 1]]}, nil, prompt: "Pick") }
+case_run("fo_option_groups")       { option_groups_from_collection_for_select(CONTINENTS, :countries, :name, :id, :name, 3) }
+case_run("fs_select")              { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.select :title, [["One", "Hi"], ["Two", "No"]] %><% end %>}) }
+case_run("fs_select_include_blank"){ tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.select :title, [["One", "Hi"]], include_blank: true %><% end %>}) }
+case_run("fs_select_prompt")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.select :title, [["One", "Hi"]], prompt: "Pick" %><% end %>}) }
+case_run("fs_select_html_opts")    { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.select :title, [["One", "Hi"]], {}, class: "s" %><% end %>}) }
+case_run("fs_select_multiple")     { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.select :title, [["One", "Hi"], ["Two", "No"]], {}, multiple: true %><% end %>}) }
+case_run("fs_collection_select")   { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.collection_select :author_id, ROOMS, :id, :name %><% end %>}) }
+case_run("fs_collection_select_sel"){ tpl(%q{<%= form_with model: PSEL, url: "/posts" do |f| %><%= f.collection_select :author_id, ROOMS, :id, :name %><% end %>}) }
+case_run("fs_collection_prompt")   { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.collection_select :author_id, ROOMS, :id, :name, prompt: true %><% end %>}) }
+case_run("fs_grouped_select")      { tpl(%q{<%= form_with model: PSEL, url: "/posts" do |f| %><%= f.grouped_collection_select :author_id, CONTINENTS, :countries, :name, :id, :name %><% end %>}) }
+case_run("fs_collection_checks")   { tpl(%q{<%= form_with model: PSEL, url: "/posts" do |f| %><%= f.collection_check_boxes :author_ids, ROOMS, :id, :name %><% end %>}) }
+case_run("fs_collection_radios")   { tpl(%q{<%= form_with model: PSEL, url: "/posts" do |f| %><%= f.collection_radio_buttons :author_id, ROOMS, :id, :name %><% end %>}) }
+case_run("fs_weekday")             { tpl(%q{<%= form_with scope: "u", url: "/u" do |f| %><%= f.weekday_select :day %><% end %>}) }
 
 # --- Partials (on-disk fixtures in oracle/fixtures) ---------------
 # A second standalone view whose lookup paths point at the fixtures
