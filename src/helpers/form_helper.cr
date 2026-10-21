@@ -11,6 +11,12 @@ module ActionView
     abstract def form_attributes : Hash(String, FormValue)
     abstract def form_persisted? : Bool
 
+    # Underscored singular model name ("post") — the polymorphic-path
+    # input: [user, post] persisted → user_post_path(user, post), new →
+    # user_posts_path(user). May differ from form_scope for namespaced
+    # models, hence a separate method.
+    abstract def form_model_name : String
+
     # Nested-attributes associations for FormBuilder#fields_for — the
     # counterpart of AR's accepts_nested_attributes_for. Override to
     # return the child records of `assoc`; nil (default) means the name
@@ -31,19 +37,42 @@ module ActionView
       class_property form_with_generates_remote_forms = true
       class_property form_with_generates_ids = false
 
+      # Polymorphic model→path resolver (the Rails polymorphic_path
+      # analogue): installed by railties_cr at boot, pointing at
+      # CRails::Routes::UrlHelpers. action_view_cr cannot see the route
+      # set itself (the dependency runs the other way — action_pack_cr
+      # depends on action_view_cr). nil → `form_with model:` without
+      # `url:` raises ArgumentError.
+      class_property polymorphic_path : (Array(FormModel) -> String)?
+
+      # form_with model normalization: single record → [record]; nil →
+      # []. The LAST model drives the scope and, via the polymorphic
+      # resolver, the form action ([user, post] → post[title] fields
+      # posted to /users/:user_id/posts, oracle fw_poly_*).
+      private def form_models(model : FormModel | Array(FormModel) | Nil) : Array(FormModel)
+        case model
+        when FormModel           then [model] of FormModel
+        when Array(FormModel)    then model
+        else                          [] of FormModel
+        end
+      end
+
       # form_with url: "/x" do |f| ... end — capture-first: the block is
       # rendered into a string before the open tag so file_field can
       # flip the multipart flag. Attribute order per Rails: user opts,
       # enctype, action, accept-charset, [data-remote], method (oracle
       # fw_local / fw_file_multipart). Returns "" — the whole form goes
       # to the output buffer in one piece.
-      def form_with(url : String? = nil, model : FormModel? = nil,
+      def form_with(url : String? = nil,
+                    model : FormModel | Array(FormModel) | Nil = nil,
                     scope : String? = nil, **opts, &) : String
-        scope = model.form_scope if model && !scope
+        models = form_models(model)
+        scope ||= models.last?.try(&.form_scope)
+        url ||= FormHelper.polymorphic_path.try(&.call(models)) unless models.empty?
         raise ArgumentError.new("form_with needs a url: or model:") unless url
         opts = __av_opts_to_h(opts)
-        method = (opts.delete("method") || (model.try(&.form_persisted?) ? "patch" : "post")).to_s
-        builder = FormBuilder.new(self, scope || "", model,
+        method = (opts.delete("method") || (models.last?.try(&.form_persisted?) ? "patch" : "post")).to_s
+        builder = FormBuilder.new(self, scope || "", models.last?,
                                   emit_ids: FormHelper.form_with_generates_ids)
         body = capture { yield builder }
         enctype = builder.multipart? ? %( enctype="multipart/form-data") : ""
@@ -61,10 +90,14 @@ module ActionView
 
       # form_with without a block: opening tag + hidden fields only,
       # NO </form> (oracle fw_no_block) — the delete-form pattern.
-      def form_with(url : String? = nil, model : FormModel? = nil,
+      def form_with(url : String? = nil,
+                    model : FormModel | Array(FormModel) | Nil = nil,
                     scope : String? = nil, **opts) : SafeString
+        models = form_models(model)
+        url ||= FormHelper.polymorphic_path.try(&.call(models)) unless models.empty?
+        raise ArgumentError.new("form_with needs a url: or model:") unless url
         opts = __av_opts_to_h(opts)
-        method = (opts.delete("method") || (model.try(&.form_persisted?) ? "patch" : "post")).to_s
+        method = (opts.delete("method") || (models.last?.try(&.form_persisted?) ? "patch" : "post")).to_s
         SafeString.new(String.build do |io|
           io << %(<form#{tag_options(opts)} action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8")
           io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms

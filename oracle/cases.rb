@@ -12,6 +12,8 @@
 # exactly like a real template would run them.
 gem "actionview", "= 8.1.4"
 require "action_view"
+require "action_dispatch"
+require "action_controller"
 require "active_model"
 require "active_support/cache/memory_store"
 require "active_support/core_ext/date/calculations"
@@ -34,11 +36,24 @@ rescue StandardError => e
   puts "#{id}\traise:#{e.class.name}"
 end
 
+# Minimal route set for the polymorphic form_with cases (fw_poly_*):
+# `form_with model:` without `url:` resolves the action via named
+# routes, so the standalone view needs url_helpers wired in — the way a
+# real app gets them from its routes.
+POLY_ROUTES = ActionDispatch::Routing::RouteSet.new
+POLY_ROUTES.draw do
+  resources :posts
+  resources :users, only: [] do
+    resources :posts
+  end
+end
+
 # Standalone view: renders inline ERB templates the way a real request
 # does (output buffer, capture, block helpers). CSRF protection is off
 # (no controller/session here) — matches the CRails port, which has no
 # CSRF layer yet; both sides generate identical tokenless forms.
 class OracleView < ActionView::Base
+  include POLY_ROUTES.url_helpers
   def protect_against_forgery?; false; end
 end
 VIEW = OracleView.with_empty_template_cache.new(ActionView::LookupContext.new([]), {}, nil)
@@ -244,7 +259,7 @@ case_run("ft_label_block")       { tpl(%q{<%= label_tag "name", class: "l" do %>
 
 # --- FormHelper / FormBuilder ------------------------------------
 POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: true, visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
-
+USER = UserModel.new(id: 5, name: "Oleg")
 # Collections for FormOptionsHelper (phase 2) / select builders (3.4).
 Room      = Struct.new(:id, :name)
 Continent = Struct.new(:name, :countries)
@@ -258,6 +273,12 @@ PSEL = PostModel.new(id: 8, title: "T", author_id: 2, author_ids: [12])
 case_run("fw_url")              { tpl(%q{<%= form_with url: "/x" do |f| %>B<% end %>}) }
 case_run("fw_model_new")        { tpl(%q{<%= form_with model: PostModel.new(id: nil, title: "t"), url: "/posts" do |f| %><%= f.text_field :title %><% end %>}) }
 case_run("fw_model")            { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.text_field :title %><%= f.text_area :body %><%= f.check_box :published %><%= f.submit "Go" %><% end %>}) }
+# Polymorphic model: without url: — action from named routes (scope is
+# still the LAST model's param_key: [user, post] → post[title]).
+case_run("fw_poly_new")         { tpl(%q{<%= form_with model: PostModel.new(id: nil, title: "t") do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("fw_poly")             { tpl(%q{<%= form_with model: POST do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("fw_poly_nested_new")  { tpl(%q{<%= form_with model: [USER, PostModel.new(id: nil, title: "t")] do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("fw_poly_nested")      { tpl(%q{<%= form_with model: [USER, PostModel.new(id: 3, title: "t")] do |f| %><%= f.text_field :title %><%= f.field_id :title %><% end %>}) }
 case_run("fw_label")            { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.label :title %><% end %>}) }
 case_run("fw_fields")           { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.hidden_field :id %><% end %>}) }
 case_run("fw_field_name")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.field_name(:title) %><% end %>}) }

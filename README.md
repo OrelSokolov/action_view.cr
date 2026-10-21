@@ -64,7 +64,8 @@ compile_partials({
 | Feature | Original | Port | Status |
 |---|---|---|---|
 | `form_with model: @post do \|f\|` (+ `url:`, `scope:`), `form_tag` + `*_tag` helpers | ✅ | Same, incl. CSRF authenticity token in non-GET forms (`authenticity_token: false` to disable) | ✅ |
-| `FormBuilder`: `label, text_field, password_field, hidden_field, text_area, check_box, radio_button, submit, file_field`, typed fields (`email/number/date/time/datetime/month/week/color/range/search/telephone/url`), `button`, `field_id/field_name` | ✅ | Same; models implement the `ActionView::FormModel` interface (`form_scope`/`form_attributes`/`form_persisted?`); `check_box` takes checked/unchecked values as named args | ✅ |
+| `form_with model:` without `url:` — action from named routes (polymorphic) | ✅ | Same: single model → `model_path`/`models_path` by `persisted?`, array `[user, post]` → nested `user_post(s)_path`; scope from the LAST model (oracle `fw_poly_*`). Resolution goes through `FormHelper.polymorphic_path`, wired to `CRails::Routes::UrlHelpers.polymorphic_path` by railties_cr at boot | ✅ |
+| `FormBuilder`: `label, text_field, password_field, hidden_field, text_area, check_box, radio_button, submit, file_field`, typed fields (`email/number/date/time/datetime/month/week/color/range/search/telephone/url`), `button`, `field_id/field_name` | ✅ | Same; models implement the `ActionView::FormModel` interface (`form_scope`/`form_attributes`/`form_persisted?`/`form_model_name`); `check_box` takes checked/unchecked values as named args | ✅ |
 | `form_with` without a block (no `</form>`); multipart `enctype` from `file_field` | ✅ | Same (capture-first form rendering) | ✅ |
 | `FormOptionsHelper`: `options_for_select (+disabled)`, `options_from_collection_for_select`, `option_groups_from_collection_for_select`, `grouped_options_for_select (+prompt)` | ✅ | Same; collections implement `FormOption`/`GroupOption` interfaces instead of method-name symbols | ✅ |
 | `FormBuilder`: `select`, `collection_select`, `grouped_collection_select`, `weekday_select`, `collection_check_boxes`, `collection_radio_buttons` (include_blank/prompt/selected/disabled/multiple + hidden companions) | ✅ | Same, byte-exact; checked-values for checkbox collections via `checked:` arg (no array FormValues) | ✅ |
@@ -80,7 +81,7 @@ compile_partials({
 | Output safety (`html_safe`, `raw`, `safe_join`, `escape_once`) | ✅ | SafeString marker type | ✅ |
 | `content_tag`, `tag("br")`, `tag.br` dot form | ✅ | Dot form is a fixed list of ~110 HTML elements, macro-generated | 🔶 |
 | URL helpers: `link_to` (options/block), `link_to_if/unless`, `button_to`, `current_page?`, `mail_to/phone_to/sms_to` | ✅ | Same | ✅ |
-| `url_for(model)` polymorphic URLs | ✅ | Not ported | ⬜ |
+| `url_for(model)` polymorphic URLs | ✅ | Form-level equivalent: `form_with model:` resolves the action polymorphically via `FormHelper.polymorphic_path` (see Form helpers) | 🔶 |
 | Text: `pluralize, truncate, excerpt, highlight, word_wrap, simple_format, cycle/...` | ✅ | Same | ✅ |
 | Numbers: `number_to_currency/delimiter/precision/human_size/human/percentage/phone` | ✅ | Same (locale data) | ✅ |
 | `debug`, `distance_of_time_in_words`, `time_ago_in_words`, `t/l` (I18n) | ✅ | Same | ✅ |
@@ -105,6 +106,9 @@ compile_partials({
   (compile-time framework; Crystal does not allow `Object` in generics).
 - FormBuilder methods are a fixed set (in Rails they are also generated
   once by a CodeGenerator).
+- `form_with model: [a, b]` needs an explicit element type —
+  `[room, message] of ActionView::FormModel` — Crystal array literals
+  of mixed model classes do not widen to the module interface.
 - Templates are scanned and compiled at build time (`CRAILS_VIEWS` or
   `app/views`).
 

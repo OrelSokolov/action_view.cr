@@ -55,6 +55,14 @@ class PostModel
   def form_persisted? : Bool
     !id.nil?
   end
+
+  def form_model_name : String
+    "post"
+  end
+
+  def to_param : String
+    id.to_s
+  end
 end
 
 # Parent with a nested-attributes association for fields_for (the
@@ -82,6 +90,14 @@ class UserModel
 
   def form_persisted? : Bool
     !id.nil?
+  end
+
+  def form_model_name : String
+    "user"
+  end
+
+  def to_param : String
+    id.to_s
   end
 
   def form_nested_children(assoc : String) : Array(ActionView::FormModel)?
@@ -138,12 +154,29 @@ POST = PostModel.new(id: 7, title: "Hi", body: "Words <b>here</b>", published: t
                      visits: 42, due: Time.utc(2026, 1, 2, 12, 30))
 PSEL = PostModel.new(id: 8, title: "T", author_id: 2)
 
+# Polymorphic-path stub for the fw_poly_* cases — mirrors the oracle's
+# POLY_ROUTES (resources :posts nested under resources :users). The
+# real resolver is CRails::Routes::UrlHelpers (action_pack_cr), wired
+# into FormHelper.polymorphic_path by railties_cr at boot.
+ActionView::Helpers::FormHelper.polymorphic_path = ->(models : Array(ActionView::FormModel)) do
+  names = models.map(&.form_model_name)
+  last = models.last
+  if names == ["post"]
+    last.form_persisted? ? "/posts/#{last.to_param}" : "/posts"
+  elsif names == ["user", "post"]
+    "/users/#{models[0].to_param}/posts" + (last.form_persisted? ? "/#{last.to_param}" : "")
+  else
+    raise ArgumentError.new("no stubbed route for #{names}")
+  end
+end
+
 # --- template-compiled view ---------------------------------------
 class TplView
   include ActionView::Helpers
 
   getter post : PostModel
   getter post_new : PostModel
+  getter post3 : PostModel
   getter user : UserModel
   getter np1 : PostModel
   getter np2 : PostModel
@@ -153,7 +186,7 @@ class TplView
   getter rooms : Array(ActionView::FormOption)
   getter continents : Array(ActionView::GroupOption)
 
-  def initialize(@post, @post_new, @user, @np1, @np2, @post55, @c1, @psel,
+  def initialize(@post, @post_new, @post3, @user, @np1, @np2, @post55, @c1, @psel,
                  @rooms : Array(ActionView::FormOption) = ROOMS,
                  @continents : Array(ActionView::GroupOption) = CONTINENTS)
   end
@@ -208,6 +241,10 @@ class TplView
   compile_template "tpl_fw_url", "#{__DIR__}/fixtures/tpl/fw_url.html.erb"
   compile_template "tpl_fw_model_new", "#{__DIR__}/fixtures/tpl/fw_model_new.html.erb"
   compile_template "tpl_fw_model", "#{__DIR__}/fixtures/tpl/fw_model.html.erb"
+  compile_template "tpl_fw_poly_new", "#{__DIR__}/fixtures/tpl/fw_poly_new.html.erb"
+  compile_template "tpl_fw_poly", "#{__DIR__}/fixtures/tpl/fw_poly.html.erb"
+  compile_template "tpl_fw_poly_nested_new", "#{__DIR__}/fixtures/tpl/fw_poly_nested_new.html.erb"
+  compile_template "tpl_fw_poly_nested", "#{__DIR__}/fixtures/tpl/fw_poly_nested.html.erb"
   compile_template "tpl_fw_label", "#{__DIR__}/fixtures/tpl/fw_label.html.erb"
   compile_template "tpl_fw_fields", "#{__DIR__}/fixtures/tpl/fw_fields.html.erb"
   compile_template "tpl_fw_field_name", "#{__DIR__}/fixtures/tpl/fw_field_name.html.erb"
@@ -238,7 +275,7 @@ U = UserModel.new(id: 5, name: "Oleg")
 U.posts << NP1
 U.posts << NP2
 
-VIEW = TplView.new(POST, PostModel.new(title: "t"), U, NP1, NP2, POST55, C1, PSEL)
+VIEW = TplView.new(POST, PostModel.new(title: "t"), PostModel.new(id: 3, title: "t"), U, NP1, NP2, POST55, C1, PSEL)
 
 # --- partial-compiled view ----------------------------------------
 class PartialView
@@ -400,6 +437,10 @@ CASES = {
   "fw_url"         => -> { VIEW.tpl_fw_url.to_s },
   "fw_model_new"   => -> { VIEW.tpl_fw_model_new.to_s },
   "fw_model"       => -> { VIEW.tpl_fw_model.to_s },
+  "fw_poly_new"    => -> { VIEW.tpl_fw_poly_new.to_s },
+  "fw_poly"        => -> { VIEW.tpl_fw_poly.to_s },
+  "fw_poly_nested_new" => -> { VIEW.tpl_fw_poly_nested_new.to_s },
+  "fw_poly_nested" => -> { VIEW.tpl_fw_poly_nested.to_s },
   "fw_label"       => -> { VIEW.tpl_fw_label.to_s },
   "fw_fields"      => -> { VIEW.tpl_fw_fields.to_s },
   "fw_field_name"  => -> { VIEW.tpl_fw_field_name.to_s },
