@@ -72,6 +72,8 @@ compile_partials({
 | Tag-level fields: `text/password/email/search/url/tel/date/color/number/range` + `file/time/datetime/datetime_local/month/week/phone` (`*_tag`), `image_submit_tag` | ✅ | Same, byte-exact (incl. `datetime` → `datetime-local` type, image src `/images/` asset prefix) | ✅ |
 | `button_tag`/`label_tag` with block; `check_box_tag`/`radio_button_tag` `id: nil`, `disabled`, attribute order (opts before `checked`) | ✅ | Same (oracle-locked merge order) | ✅ |
 | `fields_for` (view-level + `FormBuilder#fields_for`) | ✅ | Byte-identical nested names `user[posts_attributes][0][title]`, auto `hidden_field :id` after the block for persisted children, `child_index:`/`include_id:` | ✅ |
+| `fields` (form_with's builder, no form tag) | ✅ | Same, ids follow `form_with_generates_ids`; `model:` accepts arrays (scope from the LAST model); `url:` accepted for parity, ignored (oracle `fields_*`) | ✅ |
+| `form_for` (legacy wrapper) | ✅ | Same: ids always on, dom class/id from the LAST model (`edit_post`/`edit_post_7`/`new_post`), user `html:` class replaces dom class, local form (oracle `ffor_*`) | ✅ |
 | Nested-attributes index naming (`post[comments_attributes][0][_destroy]`) | ✅ | Same | ✅ |
 
 ### Content, tags, text & numbers

@@ -121,6 +121,58 @@ module ActionView
         ""
       end
 
+      # fields — form_with's scoped builder WITHOUT the form tag (Rails
+      # 7.1+ fields; oracle fields_*). Unlike fields_for, ids follow the
+      # form_with config (form_with_generates_ids), and model: may be an
+      # array — the LAST model drives the scope. `url:` is accepted for
+      # signature parity and ignored (no form tag to attach it to).
+      def fields(scope : String? = nil, model : FormModel | Array(FormModel) | Nil = nil,
+                 url : String? = nil, &) : String
+        models = form_models(model)
+        scope ||= models.last?.try(&.form_scope)
+        yield FormBuilder.new(self, scope || "", models.last?,
+                              emit_ids: FormHelper.form_with_generates_ids)
+        ""
+      end
+
+      # form_for — the legacy form helper (oracle ffor_*): field ids
+      # ALWAYS generated, dom class (edit_/new_ + the LAST model's
+      # name) and dom id (edit_post_7 / new_post) on the form tag, local
+      # form (no data-remote). `html:` opts merge in before
+      # enctype/action — a user class REPLACES the dom class (Rails
+      # semantics). Attribute order: class, id, [html opts], enctype,
+      # action, accept-charset, method.
+      def form_for(model : FormModel | Array(FormModel), url : String? = nil,
+                   html : Hash | NamedTuple | Nil = nil, &) : String
+        models = form_models(model)
+        last = models.last.not_nil!
+        url ||= FormHelper.polymorphic_path.try(&.call(models))
+        raise ArgumentError.new("form_for needs a url: or model: resolvable to a route") unless url
+        persisted = last.form_persisted?
+        method = persisted ? "patch" : "post"
+        builder = FormBuilder.new(self, last.form_scope, last, emit_ids: true)
+        body = capture { yield builder }
+        name = last.form_model_name
+        param = last.responds_to?(:to_param) ? last.to_param : last.to_s
+        dom_class = persisted ? "edit_#{name}" : "new_#{name}"
+        dom_id = persisted ? "edit_#{name}_#{param}" : "new_#{name}"
+        html_h = html ? __av_opts_to_h(html) : {} of String => AttrVal
+        merged = {} of String => AttrVal
+        merged["class"] = html_h.delete("class") || dom_class
+        merged["id"] = html_h.delete("id") || dom_id
+        html_h.each { |k, v| merged[k] = v }
+        merged["enctype"] = "multipart/form-data" if builder.multipart?
+        __erb_out(String.build do |io|
+          io << %(<form#{tag_options(merged)} action="#{HTML.escape(url)}" accept-charset="UTF-8")
+          io << %( method="post">)
+          io << __utf8_enrollment if FormTagHelper.default_enforce_utf8
+          io << __av_method_field(method) unless method == "post"
+          io << __csrf_token_field(url, method)
+          io << body << "</form>"
+        end)
+        ""
+      end
+
       class FormBuilder
         def initialize(@view : ActionView::Helpers, @scope : String,
                        @model : FormModel? = nil, @emit_ids : Bool = false)

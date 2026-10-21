@@ -245,6 +245,14 @@ class TplView
   compile_template "tpl_fw_poly", "#{__DIR__}/fixtures/tpl/fw_poly.html.erb"
   compile_template "tpl_fw_poly_nested_new", "#{__DIR__}/fixtures/tpl/fw_poly_nested_new.html.erb"
   compile_template "tpl_fw_poly_nested", "#{__DIR__}/fixtures/tpl/fw_poly_nested.html.erb"
+  compile_template "tpl_fields_model", "#{__DIR__}/fixtures/tpl/fields_model.html.erb"
+  compile_template "tpl_fields_scope", "#{__DIR__}/fixtures/tpl/fields_scope.html.erb"
+  compile_template "tpl_fields_array", "#{__DIR__}/fixtures/tpl/fields_array.html.erb"
+  compile_template "tpl_ffor_persisted", "#{__DIR__}/fixtures/tpl/ffor_persisted.html.erb"
+  compile_template "tpl_ffor_new", "#{__DIR__}/fixtures/tpl/ffor_new.html.erb"
+  compile_template "tpl_ffor_url", "#{__DIR__}/fixtures/tpl/ffor_url.html.erb"
+  compile_template "tpl_ffor_html", "#{__DIR__}/fixtures/tpl/ffor_html.html.erb"
+  compile_template "tpl_ffor_array", "#{__DIR__}/fixtures/tpl/ffor_array.html.erb"
   compile_template "tpl_fw_label", "#{__DIR__}/fixtures/tpl/fw_label.html.erb"
   compile_template "tpl_fw_fields", "#{__DIR__}/fixtures/tpl/fw_fields.html.erb"
   compile_template "tpl_fw_field_name", "#{__DIR__}/fixtures/tpl/fw_field_name.html.erb"
@@ -441,6 +449,14 @@ CASES = {
   "fw_poly"        => -> { VIEW.tpl_fw_poly.to_s },
   "fw_poly_nested_new" => -> { VIEW.tpl_fw_poly_nested_new.to_s },
   "fw_poly_nested" => -> { VIEW.tpl_fw_poly_nested.to_s },
+  "fields_model"   => -> { VIEW.tpl_fields_model.to_s },
+  "fields_scope"   => -> { VIEW.tpl_fields_scope.to_s },
+  "fields_array"   => -> { VIEW.tpl_fields_array.to_s },
+  "ffor_persisted" => -> { VIEW.tpl_ffor_persisted.to_s },
+  "ffor_new"       => -> { VIEW.tpl_ffor_new.to_s },
+  "ffor_url"       => -> { VIEW.tpl_ffor_url.to_s },
+  "ffor_html"      => -> { VIEW.tpl_ffor_html.to_s },
+  "ffor_array"     => -> { VIEW.tpl_ffor_array.to_s },
   "fw_label"       => -> { VIEW.tpl_fw_label.to_s },
   "fw_fields"      => -> { VIEW.tpl_fw_fields.to_s },
   "fw_field_name"  => -> { VIEW.tpl_fw_field_name.to_s },

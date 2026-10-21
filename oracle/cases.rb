@@ -279,6 +279,16 @@ case_run("fw_poly_new")         { tpl(%q{<%= form_with model: PostModel.new(id: 
 case_run("fw_poly")             { tpl(%q{<%= form_with model: POST do |f| %><%= f.text_field :title %><% end %>}) }
 case_run("fw_poly_nested_new")  { tpl(%q{<%= form_with model: [USER, PostModel.new(id: nil, title: "t")] do |f| %><%= f.text_field :title %><% end %>}) }
 case_run("fw_poly_nested")      { tpl(%q{<%= form_with model: [USER, PostModel.new(id: 3, title: "t")] do |f| %><%= f.text_field :title %><%= f.field_id :title %><% end %>}) }
+# fields (form_with's builder without a form tag) and form_for (the
+# legacy wrapper: dom class/id from the LAST model, ids always on).
+case_run("fields_model")        { tpl(%q{<%= fields model: POST do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("fields_scope")        { tpl(%q{<%= fields :search do |f| %><%= f.text_field :q %><% end %>}) }
+case_run("fields_array")        { tpl(%q{<%= fields model: [USER, PostModel.new(id: 3, title: "t")] do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("ffor_persisted")      { tpl(%q{<%= form_for POST do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("ffor_new")            { tpl(%q{<%= form_for PostModel.new(id: nil, title: "t") do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("ffor_url")            { tpl(%q{<%= form_for POST, url: "/custom" do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("ffor_html")           { tpl(%q{<%= form_for POST, html: {class: "c", data: {controller: "f"}} do |f| %><%= f.text_field :title %><% end %>}) }
+case_run("ffor_array")          { tpl(%q{<%= form_for [USER, POST] do |f| %><%= f.text_field :title %><% end %>}) }
 case_run("fw_label")            { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.label :title %><% end %>}) }
 case_run("fw_fields")           { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.hidden_field :id %><% end %>}) }
 case_run("fw_field_name")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.field_name(:title) %><% end %>}) }
