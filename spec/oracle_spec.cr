@@ -166,6 +166,11 @@ class TplView
   compile_template "tpl_current_cycle", "#{__DIR__}/fixtures/tpl/current_cycle.html.erb"
   compile_template "tpl_reset_cycle", "#{__DIR__}/fixtures/tpl/reset_cycle.html.erb"
   compile_template "tpl_link_block", "#{__DIR__}/fixtures/tpl/link_block.html.erb"
+  compile_template "tpl_url_button_block", "#{__DIR__}/fixtures/tpl/url_button_block.html.erb"
+  compile_template "tpl_url_button_block_delete", "#{__DIR__}/fixtures/tpl/url_button_block_delete.html.erb"
+  compile_template "tpl_url_button_block_data", "#{__DIR__}/fixtures/tpl/url_button_block_data.html.erb"
+  compile_template "tpl_fw_check_disabled", "#{__DIR__}/fixtures/tpl/fw_check_disabled.html.erb"
+  compile_template "tpl_ff_hidden_no_ac", "#{__DIR__}/fixtures/tpl/ff_hidden_no_ac.html.erb"
   compile_template "tpl_form_tag", "#{__DIR__}/fixtures/tpl/form_tag.html.erb"
   compile_template "tpl_form_tag_method", "#{__DIR__}/fixtures/tpl/form_tag_method.html.erb"
   compile_template "tpl_button_block", "#{__DIR__}/fixtures/tpl/button_block.html.erb"
@@ -329,6 +334,9 @@ CASES = {
   "url_mail_to_emails" => -> { CTX.mail_to("me@example.com").to_s },
   "url_button_to"    => -> { CTX.button_to("Go", "/go").to_s },
   "url_button_method" => -> { CTX.button_to("Del", "/d", method: "delete").to_s },
+  "url_button_block"        => -> { VIEW.tpl_url_button_block.to_s },
+  "url_button_block_delete" => -> { VIEW.tpl_url_button_block_delete.to_s },
+  "url_button_block_data"   => -> { VIEW.tpl_url_button_block_data.to_s },
   # --- assets ---
   "asset_css"         => -> { CTX.stylesheet_link_tag("a", "b").to_s },
   "asset_js"          => -> { CTX.javascript_include_tag("a", "b").to_s },
@@ -399,6 +407,23 @@ CASES = {
   "fw_file_multipart"       => -> { VIEW.tpl_fw_file_multipart.to_s },
   "fw_check_values"         => -> { VIEW.tpl_fw_check_values.to_s },
   "fw_check_values_checked" => -> { VIEW.tpl_fw_check_values_checked.to_s },
+  "fw_check_disabled"       => -> { VIEW.tpl_fw_check_disabled.to_s },
+  "ff_hidden_no_ac"         => -> {
+    ActionView::Helpers::FormTagHelper.remove_hidden_field_autocomplete = true
+    begin
+      VIEW.tpl_ff_hidden_no_ac.to_s
+    ensure
+      ActionView::Helpers::FormTagHelper.remove_hidden_field_autocomplete = false
+    end
+  },
+  "fw_check_no_ac"          => -> {
+    ActionView::Helpers::FormTagHelper.remove_hidden_field_autocomplete = true
+    begin
+      VIEW.tpl_fw_check_values.to_s
+    ensure
+      ActionView::Helpers::FormTagHelper.remove_hidden_field_autocomplete = false
+    end
+  },
   "fw_no_block"             => -> { VIEW.tpl_fw_no_block.to_s },
   "fw_typed_text"           => -> { VIEW.tpl_fw_typed_text.to_s },
   "fw_typed_num"            => -> { VIEW.tpl_fw_typed_num.to_s },

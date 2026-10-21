@@ -19,6 +19,13 @@ module ActionView
       # edge/8.2 dropped it. Apps targeting 8.2 set this to false.
       class_property method_field_autocomplete = true
 
+      # Counterpart of ActionView::Base.remove_hidden_field_autocomplete
+      # (present since 8.1, flipped by load_defaults 8.2): drops
+      # autocomplete="off" from hidden inputs — hidden_field, the
+      # check_box/select/collection hidden companions. Default false =
+      # 8.1.4 gem byte behavior.
+      class_property remove_hidden_field_autocomplete = false
+
       # No forgery layer in plain view contexts; overridden by
       # RequestForgeryProtection in controllers.
       protected def __protect_against_forgery? : Bool
@@ -31,7 +38,13 @@ module ActionView
         ""
       end
 
-      UTF8_ENROLLMENT = %(<input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" />)
+      # Rails utf8 enrollment hidden field; autocomplete gated by the
+      # same 8.2 config as every other hidden input.
+      UTF8_ENROLLMENT_BASE = %(<input type="hidden" name="utf8" value="&#x2713;")
+
+      private def __utf8_enrollment : String
+        FormTagHelper.remove_hidden_field_autocomplete ? %(#{UTF8_ENROLLMENT_BASE} />) : %(#{UTF8_ENROLLMENT_BASE} autocomplete="off" />)
+      end
 
       def __av_sanitize_id(name : String) : String
         name.delete(']').chars.map { |c|
@@ -219,7 +232,7 @@ module ActionView
         enforce_utf8 = skip_enrollment || !FormTagHelper.default_enforce_utf8 ? false : true
         __erb_out(String.build do |io|
           io << %(<form action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8"#{tag_options(opts)} method="post">)
-          io << UTF8_ENROLLMENT unless !enforce_utf8
+          io << __utf8_enrollment unless !enforce_utf8
           io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url.to_s, method) unless skip_enrollment || method == "get"
         end)

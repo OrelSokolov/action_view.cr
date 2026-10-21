@@ -55,6 +55,24 @@ module ActionView
         end
         SafeString.new(%(<form class="button_to" method="post" action="#{HTML.escape(url)}">#{inner}</form>))
       end
+
+      # button_to "/x" do ... end — html opts go to the submit <button>
+      # (type="submit" appended after user opts, as in Rails); the form
+      # tag keeps class → method → action insertion order. method: get
+      # switches the form method and drops the _method input.
+      def button_to(url : String, *, method : String? = nil, **opts, &) : SafeString
+        opts = __av_opts_to_h(opts)
+        opts.delete("type")
+        m = (method || "post").to_s
+        form_method = m == "get" ? "get" : "post"
+        body = capture { yield }
+        SafeString.new(String.build do |io|
+          io << %(<form class="button_to" method="#{form_method}" action="#{HTML.escape(url)}">)
+          io << __av_method_field(m) unless m == "post" || m == "get"
+          io << %(<button#{tag_options(opts)} type="submit">#{body}</button>)
+          io << "</form>"
+        end)
+      end
     end
   end
 end

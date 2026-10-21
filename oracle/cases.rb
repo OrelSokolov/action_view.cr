@@ -176,6 +176,9 @@ case_run("url_mail_to")         { mail_to("me@example.com", "Me") }
 case_run("url_mail_to_emails")  { mail_to("me@example.com") }
 case_run("url_button_to")       { button_to("Go", "/go") }
 case_run("url_button_method")   { button_to("Del", "/d", method: :delete) }
+case_run("url_button_block")        { tpl(%q{<%= button_to "/go", class: "btn" do %>Go<% end %>}) }
+case_run("url_button_block_delete") { tpl(%q{<%= button_to "/d", method: :delete, class: "btn--x" do %>Del <b>x</b><% end %>}) }
+case_run("url_button_block_data")   { tpl(%q{<%= button_to "/d", data: {turbo_confirm: "Sure?"} do %>X<% end %>}) }
 
 # --- AssetTagHelper ----------------------------------------------
 case_run("asset_css")           { stylesheet_link_tag("a", "b") }
@@ -263,6 +266,27 @@ case_run("fw_field_name")       { tpl(%q{<%= form_with model: POST, url: "/posts
 case_run("fw_file_multipart")   { tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.file_field :avatar, class: "input" %><% end %>}) }
 case_run("fw_check_values")     { tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.check_box :role, {class: "sw"}, "administrator", "member" %><% end %>}) }
 case_run("fw_check_values_checked") { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.check_box :published, {class: "sw"}, "true", "false" %><% end %>}) }
+# hidden: stays an input attribute; disabled propagates to the
+# unchecked-value companion (name/disabled/form slice, as in Rails).
+case_run("fw_check_disabled")   { tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.check_box :role, {data: {action: "form#submit"}, hidden: true, id: "role_user_1", disabled: true}, "administrator", "member" %><% end %>}) }
+# load_defaults 8.2: remove_hidden_field_autocomplete drops
+# autocomplete="off" from hidden inputs.
+case_run("ff_hidden_no_ac") do
+  ActionView::Base.remove_hidden_field_autocomplete = true
+  begin
+    tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.hidden_field :id, value: "7" %><% end %>})
+  ensure
+    ActionView::Base.remove_hidden_field_autocomplete = false
+  end
+end
+case_run("fw_check_no_ac") do
+  ActionView::Base.remove_hidden_field_autocomplete = true
+  begin
+    tpl(%q{<%= form_with scope: "user", url: "/u" do |f| %><%= f.check_box :role, {class: "sw"}, "administrator", "member" %><% end %>})
+  ensure
+    ActionView::Base.remove_hidden_field_autocomplete = false
+  end
+end
 case_run("fw_no_block")         { tpl(%q{<%= form_with url: "/u/1", method: :delete %>}) }
 case_run("fw_typed_text")       { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.email_field :title %><%= f.search_field :title %><%= f.telephone_field :title %><%= f.url_field :title %><%= f.color_field :title %><% end %>}) }
 case_run("fw_typed_num")        { tpl(%q{<%= form_with model: POST, url: "/posts" do |f| %><%= f.number_field :visits %><%= f.range_field :visits, min: 0, max: 9 %><% end %>}) }

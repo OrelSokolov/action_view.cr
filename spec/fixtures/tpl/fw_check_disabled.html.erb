@@ -1,0 +1,1 @@
+<%= form_with scope: "user", url: "/u" do |f| %><%= f.check_box :role, data: {action: "form#submit"}, hidden: true, id: "role_user_1", disabled: true, checked_value: "administrator", unchecked_value: "member" %><% end %>

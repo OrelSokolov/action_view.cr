@@ -51,7 +51,7 @@ module ActionView
           io << %(<form#{tag_options(opts)}#{enctype} action="#{HTML.escape(url)}" accept-charset="UTF-8")
           io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
           io << %( method="post">)
-          io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
+          io << __utf8_enrollment if FormTagHelper.default_enforce_utf8
           io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url, method)
           io << body << "</form>"
@@ -69,7 +69,7 @@ module ActionView
           io << %(<form#{tag_options(opts)} action="#{HTML.escape(url.to_s)}" accept-charset="UTF-8")
           io << %( data-remote="true") if FormHelper.form_with_generates_remote_forms
           io << %( method="post">)
-          io << UTF8_ENROLLMENT if FormTagHelper.default_enforce_utf8
+          io << __utf8_enrollment if FormTagHelper.default_enforce_utf8
           io << __av_method_field(method) unless method == "post"
           io << __csrf_token_field(url.to_s, method)
         end)
@@ -269,10 +269,12 @@ module ActionView
 
         # Attribute order per oracle (ff_hidden_value, fw_fields):
         # autocomplete, user opts (an explicit value: slots in here),
-        # type, value, name, id.
+        # type, value, name, id. load_defaults 8.2 apps drop the
+        # autocomplete via remove_hidden_field_autocomplete.
         def hidden_field(attr : String | Symbol, **opts) : SafeString
           @emitted_hidden_id = true if attr.to_s == "id" && @emit_ids
-          h = {"autocomplete" => "off"} of String => AttrVal
+          h = {} of String => AttrVal
+          h["autocomplete"] = "off" unless FormTagHelper.remove_hidden_field_autocomplete
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
           h["type"] = "hidden" unless h["type"]?
           h["value"] = value_of(attr.to_s) unless h["value"]?
@@ -282,23 +284,42 @@ module ActionView
 
         # Positional values as named args (Crystal has no positional
         # options hash): check_box :role, checked_value: "administrator",
-        # unchecked_value: "member". Attribute order per oracle
-        # (fw_check_values*): hidden (name, type, value, autocomplete),
-        # then opts, type, value, checked, name, id.
+        # unchecked_value: "member". `include_hidden` toggles the
+        # unchecked-value companion (Rails include_hidden); a `hidden`
+        # opt passes through to the input as a boolean attribute, as in
+        # Rails. `checked:` overrides the model-derived state (the
+        # port's FormValue has no enum coercion — same deviation as
+        # collection_check_boxes). Attribute order per oracle
+        # (fw_check_values*, fw_check_disabled): hidden (name,
+        # [disabled/form], type, value, autocomplete), then opts, type,
+        # value, checked, name, id.
         def check_box(attr : String | Symbol, *, checked_value : String = "1",
-                      unchecked_value : String = "0", hidden : Bool = true, **opts) : SafeString
+                      unchecked_value : String = "0", include_hidden : Bool = true,
+                      checked : Bool? = nil, **opts) : SafeString
           name = name_of(attr.to_s)
           v = raw_value(attr.to_s)
-          checked = case v
-                    when Bool then v
-                    when Nil  then false
-                    else           v.to_s == checked_value
+          checked = if checked.nil?
+                      case v
+                      when Bool then v
+                      when Nil  then false
+                      else           v.to_s == checked_value
+                      end
+                    else
+                      checked
                     end
+          h = @view.__av_opts_to_h(opts)
           SafeString.new(String.build do |io|
-            io << %(<input name="#{name}" type="hidden" value="#{HTML.escape(unchecked_value)}" autocomplete="off" />) if hidden
-            io << %(<input#{@view.tag_options(opts)} type="checkbox" value="#{HTML.escape(checked_value)}")
+            if include_hidden
+              companion = {"name" => name} of String => AttrVal
+              {"disabled", "form"}.each { |k| companion[k] = h[k] if h[k]? }
+              companion["type"] = "hidden"
+              companion["value"] = unchecked_value
+              companion["autocomplete"] = "off" unless FormTagHelper.remove_hidden_field_autocomplete
+              io << %(<input#{@view.tag_options(companion)} />)
+            end
+            io << %(<input#{@view.tag_options(h)} type="checkbox" value="#{HTML.escape(checked_value)}")
             io << %( checked="checked") if checked
-            io << %( name="#{name}"#{id_attr(attr.to_s, opts.has_key?(:id))} />)
+            io << %( name="#{name}"#{id_attr(attr.to_s, h.has_key?("id"))} />)
           end)
         end
 
@@ -360,7 +381,13 @@ module ActionView
           html_name = multiple ? "#{name}[]" : name
           h["name"] = html_name
           select_html = %(<select#{@view.tag_options(h)}#{id_attr(attr, h.has_key?("id"))}>#{option_tags}</select>)
-          hidden = multiple && include_hidden ? %(<input name="#{html_name}" type="hidden" value="" autocomplete="off" />) : ""
+          if multiple && include_hidden
+            companion = {"name" => html_name, "type" => "hidden", "value" => ""} of String => AttrVal
+            companion["autocomplete"] = "off" unless FormTagHelper.remove_hidden_field_autocomplete
+            hidden = %(<input#{@view.tag_options(companion)} />)
+          else
+            hidden = ""
+          end
           SafeString.new(hidden + select_html)
         end
 
@@ -435,7 +462,8 @@ module ActionView
                                    **html_opts) : SafeString
           name = "#{name_of(attr.to_s)}[]"
           base_id = field_id(attr)
-          hidden = include_hidden ? %(<input type="hidden" name="#{name}" value="" autocomplete="off" />) : ""
+          no_ac = FormTagHelper.remove_hidden_field_autocomplete
+          hidden = include_hidden ? %(<input type="hidden" name="#{name}" value=""#{" autocomplete=\"off\"" unless no_ac} />) : ""
           checked_list = checked.try(&.map(&.to_s)) || [] of String
           body = collection.map { |e|
             v = e.option_value
@@ -451,7 +479,8 @@ module ActionView
           name = name_of(attr.to_s)
           base_id = field_id(attr)
           current = raw_value(attr.to_s)
-          hidden = %(<input type="hidden" name="#{name}" value="" autocomplete="off" />)
+          no_ac = FormTagHelper.remove_hidden_field_autocomplete
+          hidden = %(<input type="hidden" name="#{name}" value=""#{" autocomplete=\"off\"" unless no_ac} />)
           body = collection.map { |e|
             v = e.option_value
             id = "#{base_id}_#{@view.__av_sanitize_id(v)}"
