@@ -27,7 +27,7 @@ module ActionView
           if (hit = ActionView.cache_store.read(key))
             __erb_out(hit)
           else
-            content = capture { yield }
+            content = capture { yield }.to_s
             ActionView.cache_store.write(key, content, expires_in)
             __erb_out(content)
           end
