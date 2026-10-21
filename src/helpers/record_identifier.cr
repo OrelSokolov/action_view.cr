@@ -11,7 +11,10 @@ module ActionView
       end
 
       def self.dom_id(record, prefix : String | Symbol | Nil = nil) : String
-        singular = record.class.name.underscore
+        # Rails dom_class: model_name.singular_route_key — namespace-
+        # underscore с '/':'_' (Rooms::Open → rooms_open), не
+        # String#underscore ('rooms/open').
+        singular = record.class.name.underscore.tr("/", "_")
         if (record_id = record.id)
           "#{dom_prefix(prefix)}#{singular}_#{record_id}"
         else

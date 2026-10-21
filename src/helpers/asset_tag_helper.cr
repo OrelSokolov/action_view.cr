@@ -25,18 +25,29 @@ module ActionView
       end
 
       def image_tag(source : String, **opts) : SafeString
-        opts = __av_opts_to_h(opts)
+        AssetTagHelper.image_tag(source, __av_opts_to_h(opts))
+      end
+
+      # Static entry point for dom builders outside a view context
+      # (ChatLayout-style modules); byte-identical to the instance form.
+      # opts — pre-normalized Hash (use TagHelper.__av_normalize_val on
+      # raw values), e.g. {"aria" => {"hidden" => "true"}, "size" => "20x20"}.
+      def self.image_tag(source : String,
+                         opts : Hash = {} of String => ::Nil) : SafeString
         attrs = {} of String => AttrVal
+        opts = opts.transform_values { |v| TagHelper.__av_normalize_val(v) }
         alt_opt = opts.delete("alt")
         attrs["alt"] = alt_opt if alt_opt
-        attrs["src"] = compute_asset_path(source) { |s| "images/#{s}" }
+        # compute_asset_path с images-префиксом (статик-контекст — без
+        # yield-метода инстанса)
+        attrs["src"] = (source.starts_with?('/') || source.includes?("://")) ? source : "/images/#{source}"
         if size_opt = opts.delete("size")
           parts = size_opt.to_s.split("x", 2)
           attrs["width"] = parts[0]
           attrs["height"] = parts[1]? || parts[0]
         end
         attrs.merge!(opts)
-        SafeString.new(%(<img#{tag_options(attrs)} />))
+        SafeString.new(%(<img#{TagHelper.tag_options(attrs)} />))
       end
 
       def favicon_link_tag(source : String = "favicon.ico", **opts) : SafeString
