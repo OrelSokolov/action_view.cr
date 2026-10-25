@@ -194,6 +194,7 @@ class TplView
   compile_template "tpl_erb_escapes", "#{__DIR__}/fixtures/tpl/erb_escapes.html.erb"
   compile_template "tpl_erb_raw_ok", "#{__DIR__}/fixtures/tpl/erb_raw_ok.html.erb"
   compile_template "tpl_ct_block", "#{__DIR__}/fixtures/tpl/ct_block.html.erb"
+  compile_template "tpl_tag_concat", "#{__DIR__}/fixtures/tpl/tag_concat.html.erb"
   compile_template "tpl_ct_nested", "#{__DIR__}/fixtures/tpl/ct_nested.html.erb"
   compile_template "tpl_cycle", "#{__DIR__}/fixtures/tpl/cycle.html.erb"
   compile_template "tpl_current_cycle", "#{__DIR__}/fixtures/tpl/current_cycle.html.erb"
@@ -333,6 +334,13 @@ CASES = {
   "tag_escape_values"   => -> { CTX.tag("img", alt: %(a"b&<c)).to_s },
   "tag_dot_form"        => -> { CTX.tag.br.to_s },
   "tag_dot_attrs"       => -> { CTX.tag.input(type: "text", disabled: true).to_s },
+  "tag_dot_content"     => -> { CTX.tag.span("Hello <b>", class: "version-badge").to_s },
+  "tag_dot_bare"        => -> { CTX.tag.span.to_s },
+  "tag_dot_title"       => -> { CTX.tag.title("My Page").to_s },
+  "tag_dot_style"       => -> { CTX.tag.style("body{color:red}", data: {"turbo_track" => "reload"}).to_s },
+  "tag_dot_dasherize"   => -> { CTX.tag.lexxy_prompt(trigger: "@", name: "mention").to_s },
+  "tag_dot_void_aria"   => -> { CTX.tag.img(src: "/x.png", aria: {"hidden" => "true"}).to_s },
+  "tag_kwarg_name"      => -> { CTX.tag(:meta, name: "viewport", content: "width=device-width").to_s },
   "ct_block"            => -> { VIEW.tpl_ct_block.to_s },
   "ct_inline"           => -> { CTX.content_tag(:p, "hello", class: "x").to_s },
   "ct_nested"           => -> { VIEW.tpl_ct_nested.to_s },
@@ -588,6 +596,14 @@ describe "action_view oracle (actionview 8.1.4)" do
     extra = CASES.keys - EXPECTED.keys
     missing.should be_empty
     extra.should be_empty
+  end
+
+  # Rails 8.2 app behavior: the app oracle (rails main / actionview
+  # 8.2.0.alpha, probed via its bundle) concatenates positional content with
+  # the block output; the 8.1.4 gem drops positional content when a block is
+  # given. Not oracle-drivable from the pinned 8.1.4 generator.
+  it "tag concatenates positional content with the block output" do
+    VIEW.tpl_tag_concat.to_s.strip.should eq(%(<span class="x">AB</span>))
   end
 
   # Rails 8.2 app behavior (the oracle gem is 8.1.4 and always emits

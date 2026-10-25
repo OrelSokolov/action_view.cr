@@ -1,8 +1,10 @@
-# TagHelper: tag()/content_tag()/tag.<name> — byte-exact with
-# actionview 8.1.4 (oracle: tag_*, ct_* cases).
+# TagHelper: tag()/content_tag()/tag.<name> — byte-exact with the oracle
+# bundle (rails main / actionview 8.2.0.alpha; oracle: tag_*, ct_* cases).
 #
 # Quirk preserved from Rails: `tag("br")` emits `<br />`, while the
-# dot form `tag.br` emits `<br>` (TagBuilder#tag_string).
+# dot form `tag.br` emits `<br>` (VOID_ELEMENTS, no self-closing slash).
+# Dot names dasherize (`tag.lexxy_prompt` → `<lexxy-prompt>`); a positional
+# content argument is escaped and concatenated with the block output.
 
 module ActionView
   module Helpers
@@ -125,8 +127,10 @@ module ActionView
       end
 
       # `tag("br")` -> `<br />`; `tag("img", src: ...)` -> `<img src="..." />`
-      def tag(name : String | Symbol, **attrs) : SafeString
-        SafeString.new("<#{name}#{tag_options(attrs)} />")
+      # (parameter renamed off `name` — the `name:` kwarg is a common HTML
+      # attribute and must land in **attrs, not bind the positional arg).
+      def tag(tag_name : String | Symbol, **attrs) : SafeString
+        SafeString.new("<#{tag_name}#{tag_options(attrs)} />")
       end
 
       # Dot form: `tag.br` -> `<br>` (no closing slash, as in Rails).
@@ -134,35 +138,61 @@ module ActionView
         TagBuilder.new(self)
       end
 
-      def content_tag(name : String | Symbol, content : String? = nil, **attrs) : SafeString
-        inner = content ? HTML.escape(content) : ""
-        SafeString.new("<#{name}#{tag_options(attrs)}>#{inner}</#{name}>")
+      def content_tag(tag_name : String | Symbol, content_value : String? = nil, **attrs) : SafeString
+        inner = content_value ? HTML.escape(content_value) : ""
+        SafeString.new("<#{tag_name}#{tag_options(attrs)}>#{inner}</#{tag_name}>")
       end
 
-      def content_tag(name : String | Symbol, **attrs, &) : SafeString
+      def content_tag(tag_name : String | Symbol, **attrs, &) : SafeString
         body = capture { yield }
-        SafeString.new("<#{name}#{tag_options(attrs)}>#{body}</#{name}>")
+        SafeString.new("<#{tag_name}#{tag_options(attrs)}>#{body}</#{tag_name}>")
       end
 
-      # `tag.div class: "x" { ... }` / `tag.br`
+      # `tag.div class: "x" { ... }` / `tag.br` — Rails-main TagBuilder
+      # semantics: dot names dasherize (`lexxy_prompt` → `lexxy-prompt`),
+      # an optional positional content argument is escaped (SafeString
+      # passes through) and concatenated with the block output
+      # (`tag.span("A", class: "x") { "B" }` → `<span class="x">AB</span>`),
+      # void elements render `<tag ...>` without a closing tag.
+      VOID_ELEMENTS = %w(area base br col embed hr img input keygen link
+                         meta source track wbr)
+
+      def __av_tag_content(tag_name : String, content_value : String?, **attrs) : SafeString
+        __av_tag_body(tag_name, __av_escape_content(content_value), attrs)
+      end
+
+      def __av_tag_block(tag_name : String, content_value : String?, **attrs, &) : SafeString
+        body = __av_escape_content(content_value) + capture { yield }.to_s
+        __av_tag_body(tag_name, body, attrs)
+      end
+
+      def __av_escape_content(content : String?) : String
+        return "" if content.nil?
+        content.is_a?(SafeString) ? content.to_s : HTML.escape(content)
+      end
+
+      private def __av_tag_body(tag_name : String, body : String, attrs) : SafeString
+        return SafeString.new("<#{tag_name}#{tag_options(attrs)}>") if VOID_ELEMENTS.includes?(tag_name)
+        SafeString.new("<#{tag_name}#{tag_options(attrs)}>#{body}</#{tag_name}>")
+      end
+
       class TagBuilder
         def initialize(@view : ActionView::Helpers)
         end
 
         macro method_missing(call)
+          {% raise "tag.#{call.name}: at most one positional content argument is supported" if call.args.size > 1 %}
+          {% name = call.name.stringify.gsub(/_/, "-") %}
           {% extra = "" %}
           {% unless call.named_args.is_a?(Nop) %}
             {% extra = "**{ " + call.named_args.map { |na| "#{na.name.id}: #{na.value}" }.join(", ") + " }" %}
           {% end %}
+          {% content = call.args.empty? ? "nil".id : call.args[0] %}
           {% if call.block %}
-            @view.content_tag({{ call.name.stringify }}, {{ extra.id }}) {{ call.block }}
+            @view.__av_tag_block({{ name }}, {{ content }}, {{ extra.id }}) {{ call.block }}
           {% else %}
-            __av_tag_string({{ call.name.stringify }}, {{ extra.id }})
+            @view.__av_tag_content({{ name }}, {{ content }}, {{ extra.id }})
           {% end %}
-        end
-
-        def __av_tag_string(name : String, **attrs) : String
-          "<#{name}#{@view.tag_options(attrs)}>"
         end
       end
     end

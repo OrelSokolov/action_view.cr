@@ -142,6 +142,13 @@ case_run("tag_aria_nested")     { tag("div", aria: {hidden: "true"}) }
 case_run("tag_escape_values")   { tag("img", alt: %(a"b&<c)) }
 case_run("tag_dot_form")        { tag.br }
 case_run("tag_dot_attrs")       { tag.input type: "text", disabled: true }
+case_run("tag_dot_content")     { tag.span "Hello <b>", class: "version-badge" }
+case_run("tag_dot_bare")        { tag.span }
+case_run("tag_dot_title")       { tag.title "My Page" }
+case_run("tag_dot_style")       { tag.style "body{color:red}", data: { turbo_track: "reload" } }
+case_run("tag_dot_dasherize")   { tag.lexxy_prompt trigger: "@", name: "mention" }
+case_run("tag_dot_void_aria")   { tag.img src: "/x.png", aria: { hidden: "true" } }
+case_run("tag_kwarg_name")      { tag :meta, name: "viewport", content: "width=device-width" }
 case_run("ct_block")            { tpl(%q{<%= content_tag(:div, class: "wrap") { "inner" } %>}) }
 case_run("ct_inline")           { content_tag(:p, "hello", class: "x") }
 case_run("ct_nested")           { tpl(%q{<%= content_tag(:ul) { safe_join([content_tag(:li, "1"), content_tag(:li, "2")]) } %>}) }

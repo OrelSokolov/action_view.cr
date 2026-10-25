@@ -19,6 +19,13 @@ tag_aria_nested	<div aria-hidden="true" />
 tag_escape_values	<img alt="a&quot;b&amp;&lt;c" />
 tag_dot_form	<br>
 tag_dot_attrs	<input type="text" disabled="disabled">
+tag_dot_content	<span class="version-badge">Hello &lt;b&gt;</span>
+tag_dot_bare	<span></span>
+tag_dot_title	<title>My Page</title>
+tag_dot_style	<style data-turbo-track="reload">body{color:red}</style>
+tag_dot_dasherize	<lexxy-prompt trigger="@" name="mention"></lexxy-prompt>
+tag_dot_void_aria	<img src="/x.png" aria-hidden="true">
+tag_kwarg_name	<meta name="viewport" content="width=device-width" />
 ct_block	<div class="wrap">inner</div>
 ct_inline	<p class="x">hello</p>
 ct_nested	<ul><li>1</li><li>2</li></ul>
