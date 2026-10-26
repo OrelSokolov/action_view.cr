@@ -49,11 +49,15 @@ module ActionView
       # []. The LAST model drives the scope and, via the polymorphic
       # resolver, the form action ([user, post] → post[title] fields
       # posted to /users/:user_id/posts, oracle fw_poly_*).
-      private def form_models(model : FormModel | Array(FormModel) | Nil) : Array(FormModel)
+      # The array is handled structurally (Array, then cast per element):
+      # a literal [message, Boost.new] is typed Array(Message | Boost) at
+      # the call site — Crystal generics are invariant, so a
+      # `when Array(FormModel)` branch would miss it.
+      private def form_models(model : FormModel | Array | Nil) : Array(FormModel)
         case model
-        when FormModel           then [model] of FormModel
-        when Array(FormModel)    then model
-        else                          [] of FormModel
+        when FormModel then [model] of FormModel
+        when Array     then model.map { |m| m.as(FormModel) }
+        else                [] of FormModel
         end
       end
 
@@ -64,7 +68,7 @@ module ActionView
       # fw_local / fw_file_multipart). Returns "" — the whole form goes
       # to the output buffer in one piece.
       def form_with(url : String? = nil,
-                    model : FormModel | Array(FormModel) | Nil = nil,
+                    model : FormModel | Array | Nil = nil,
                     scope : String? = nil, **opts, &) : String
         models = form_models(model)
         scope ||= models.last?.try(&.form_scope)
@@ -91,7 +95,7 @@ module ActionView
       # form_with without a block: opening tag + hidden fields only,
       # NO </form> (oracle fw_no_block) — the delete-form pattern.
       def form_with(url : String? = nil,
-                    model : FormModel | Array(FormModel) | Nil = nil,
+                    model : FormModel | Array | Nil = nil,
                     scope : String? = nil, **opts) : SafeString
         models = form_models(model)
         url ||= FormHelper.polymorphic_path.try(&.call(models)) unless models.empty?
@@ -126,7 +130,7 @@ module ActionView
       # form_with config (form_with_generates_ids), and model: may be an
       # array — the LAST model drives the scope. `url:` is accepted for
       # signature parity and ignored (no form tag to attach it to).
-      def fields(scope : String? = nil, model : FormModel | Array(FormModel) | Nil = nil,
+      def fields(scope : String? = nil, model : FormModel | Array | Nil = nil,
                  url : String? = nil, &) : String
         models = form_models(model)
         scope ||= models.last?.try(&.form_scope)
@@ -142,7 +146,7 @@ module ActionView
       # enctype/action — a user class REPLACES the dom class (Rails
       # semantics). Attribute order: class, id, [html opts], enctype,
       # action, accept-charset, method.
-      def form_for(model : FormModel | Array(FormModel), url : String? = nil,
+      def form_for(model : FormModel | Array, url : String? = nil,
                    html : Hash | NamedTuple | Nil = nil, &) : String
         models = form_models(model)
         last = models.last.not_nil!
