@@ -177,6 +177,58 @@ module ActionView
         ""
       end
 
+      # ————— ActionText lexxy editor (Rails 8.2 default) —————
+      # rich_textarea_tag mirrors ActionText::TagHelper#rich_textarea_tag
+      # with the lexxy editor: the <lexxy-editor> custom element, class
+      # defaulting to "lexxy-content", name/value defaults, and
+      # data-direct-upload-url / data-blob-url-template defaulting from
+      # the host view context (Rails resolves them through
+      # main_app.rails_direct_uploads_url / rails_service_blob_url —
+      # override the two methods below; nil → attribute omitted).
+
+      # Data-URL defaults for rich_textarea_tag; override in the host
+      # view context.
+      def rich_text_direct_upload_url : String?
+        nil
+      end
+
+      def rich_text_blob_url_template : String?
+        nil
+      end
+
+      def rich_textarea_tag(name : String, value : String? = nil, **opts) : SafeString
+        SafeString.new(__av_lexxy_editor(name, value, __av_opts_to_h(opts)) { "" })
+      end
+
+      def rich_textarea_tag(name : String, value : String? = nil, **opts, &) : SafeString
+        SafeString.new(__av_lexxy_editor(name, value, __av_opts_to_h(opts)) { capture { yield }.to_s })
+      end
+
+      # Shared open/close assembly: name defaults, a truthy value emits
+      # the attribute, class falls back to "lexxy-content", the data
+      # hash gains the two upload URLs unless already given. The block
+      # body is NOT escaped (mention prompts and other tag helpers pass
+      # SafeStrings, as with content_tag).
+      def __av_lexxy_editor(name : String, value : String?, h : Hash(String, AttrVal), &)
+        h["name"] = name unless h["name"]?
+        h["value"] = value if value && !h["value"]?
+        h["class"] = "lexxy-content" unless h["class"]?
+        data = if (d = h["data"]?).is_a?(Hash)
+                 d.as(Hash(String, AttrVal))
+               else
+                 nd = {} of String => AttrVal
+                 h["data"] = nd
+                 nd
+               end
+        unless (u = rich_text_direct_upload_url).nil? || data["direct_upload_url"]?
+          data["direct_upload_url"] = u
+        end
+        unless (t = rich_text_blob_url_template).nil? || data["blob_url_template"]?
+          data["blob_url_template"] = t
+        end
+        %(<lexxy-editor#{tag_options(h)}>#{yield}</lexxy-editor>)
+      end
+
       class FormBuilder
         def initialize(@view : ActionView::Helpers, @scope : String,
                        @model : FormModel? = nil, @emit_ids : Bool = false)
@@ -587,6 +639,35 @@ module ActionView
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
           value = (v = h.delete("value")) ? v.to_s : value_of(attr.to_s)
           SafeString.new(%(<textarea#{@view.tag_options(h)} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s, h.has_key?("id"))}>\n#{HTML.escape(value)}</textarea>))
+        end
+
+        # ActionText Tags::ActionText (lexxy editor, Rails 8.2): name
+        # from the scope, id when the builder emits ids (explicit id:
+        # wins), an explicit value: opt wins over the object's
+        # attribute; class/data defaults in rich_textarea_tag.
+        def rich_text_area(attr : String | Symbol, **opts) : SafeString
+          a = attr.to_s
+          h = @view.__av_opts_to_h(opts)
+          value = (v = h.delete("value")) ? v.to_s : value_or_nil(a)
+          h["id"] = field_id(a) if @emit_ids && !h["id"]?
+          SafeString.new(@view.__av_lexxy_editor(name_of(a), value, h) { "" })
+        end
+
+        def rich_text_area(attr : String | Symbol, **opts, &) : SafeString
+          a = attr.to_s
+          h = @view.__av_opts_to_h(opts)
+          value = (v = h.delete("value")) ? v.to_s : value_or_nil(a)
+          h["id"] = field_id(a) if @emit_ids && !h["id"]?
+          SafeString.new(@view.__av_lexxy_editor(name_of(a), value, h) { @view.capture { yield }.to_s })
+        end
+
+        # Rails aliases rich_textarea ↔ rich_text_area.
+        def rich_textarea(attr : String | Symbol, **opts) : SafeString
+          rich_text_area(attr, **opts)
+        end
+
+        def rich_textarea(attr : String | Symbol, **opts, &) : SafeString
+          rich_text_area(attr, **opts) { |form| yield form }
         end
 
         # fields_for — nested forms (oracle: ff_nested*, ff_child_index,
