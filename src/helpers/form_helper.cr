@@ -421,7 +421,10 @@ module ActionView
           h["autocomplete"] = "off" unless FormTagHelper.remove_hidden_field_autocomplete
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
           h["type"] = "hidden" unless h["type"]?
-          h["value"] = value_of(attr.to_s) unless h["value"]?
+          # Rails reads value_before_type_cast and omits the attribute
+          # entirely when it is nil; empty string still renders value="".
+          rv = raw_value(attr.to_s)
+          h["value"] = rv.to_s unless h["value"]? || rv.nil?
           h["name"] = name_of(attr.to_s) unless h["name"]?
           SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr.to_s, h.has_key?("id"))} />))
         end

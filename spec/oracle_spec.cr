@@ -625,4 +625,19 @@ describe "action_view oracle (actionview 8.1.4)" do
     VIEW.content_for(:sidebar).to_s.should eq("S")
     VIEW.content_for?(:sidebar).should be_true
   end
+
+  # Rails reads value_before_type_cast and omits the value attribute
+  # when it is nil (empty string still renders value="").
+  it "hidden_field omits value when the attribute is nil" do
+    post = PostModel.new
+    result = VIEW.capture do
+      VIEW.form_with(model: post, url: "/posts") { |f| f.hidden_field("id") }
+    end.to_s
+    result.should eq(%(<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input autocomplete="off" type="hidden" name="post[id]" /></form>))
+
+    result = VIEW.capture do
+      VIEW.form_with(model: post, url: "/posts") { |f| f.hidden_field("title") }
+    end.to_s
+    result.should eq(%(<form action="/posts" accept-charset="UTF-8" data-remote="true" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input autocomplete="off" type="hidden" value="" name="post[title]" /></form>))
+  end
 end
