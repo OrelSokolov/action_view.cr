@@ -289,7 +289,10 @@ module ActionView
         # (fw_typed_*, fw_local): user opts (+size from maxlength),
         # type, value, name, id. `value_first` moves the (defaulted)
         # value before type (color_field / date-family quirk). A nil
-        # value omits the attribute (Rails TextField).
+        # value omits the attribute (Rails TextField). An explicit
+        # name: opt wins (Rails add_default_name_and_id sets name only
+        # when absent) — form_with model: an STI record renders
+        # rooms_open[name] by default, templates override to room[name].
         private def __ff_input(attr : String, type : String, field_value : String?,
                                *, value_first : Bool = false, **opts) : SafeString
           h = {} of String => AttrVal
@@ -302,7 +305,7 @@ module ActionView
             h["type"] = type unless h["type"]?
             h["value"] = field_value unless h["value"]? || field_value.nil?
           end
-          h["name"] = name_of(attr)
+          h["name"] = name_of(attr) unless h["name"]?
           SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr, h.has_key?("id"))} />))
         end
 
@@ -419,7 +422,7 @@ module ActionView
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
           h["type"] = "hidden" unless h["type"]?
           h["value"] = value_of(attr.to_s) unless h["value"]?
-          h["name"] = name_of(attr.to_s)
+          h["name"] = name_of(attr.to_s) unless h["name"]?
           SafeString.new(%(<input#{@view.tag_options(h)}#{id_attr(attr.to_s, h.has_key?("id"))} />))
         end
 
@@ -437,7 +440,9 @@ module ActionView
         def check_box(attr : String | Symbol, *, checked_value : String = "1",
                       unchecked_value : String = "0", include_hidden : Bool = true,
                       checked : Bool? = nil, **opts) : SafeString
-          name = name_of(attr.to_s)
+          h = @view.__av_opts_to_h(opts)
+          # Explicit name: wins (Rails add_default_name_and_id).
+          name = (n = h["name"]?) ? n.to_s : name_of(attr.to_s)
           v = raw_value(attr.to_s)
           checked = if checked.nil?
                       case v
@@ -448,7 +453,6 @@ module ActionView
                     else
                       checked
                     end
-          h = @view.__av_opts_to_h(opts)
           SafeString.new(String.build do |io|
             if include_hidden
               companion = {"name" => name} of String => AttrVal
@@ -465,8 +469,11 @@ module ActionView
         end
 
         def radio_button(attr : String | Symbol, tag_value : String, **opts) : SafeString
+          h = @view.__av_opts_to_h(opts)
+          # Explicit name: wins (Rails add_default_name_and_id).
+          name = (n = h["name"]?) ? n.to_s : name_of(attr.to_s)
           checked = value_of(attr.to_s) == tag_value ? %( checked="checked") : ""
-          SafeString.new(%(<input#{@view.tag_options(opts)} type="radio" value="#{HTML.escape(tag_value)}"#{checked} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s, opts.has_key?(:id))} />))
+          SafeString.new(%(<input#{@view.tag_options(h)} type="radio" value="#{HTML.escape(tag_value)}"#{checked} name="#{name}"#{id_attr(attr.to_s, h.has_key?("id"))} />))
         end
 
         # --- select family (FORMS_SUPPORT phase 2 + 3.4) ---------------
@@ -633,12 +640,16 @@ module ActionView
 
         # Rails Tags::TextArea: an explicit value: opt wins over the
         # object's attribute value; attribute order opts → name → id
-        # (oracle ff_textarea_value).
+        # (oracle ff_textarea_value). Explicit name:/id: opts pass
+        # through tag_options, so the defaults apply only in their
+        # absence (Rails add_default_name_and_id).
         def text_area(attr : String | Symbol, **opts) : SafeString
           h = {} of String => AttrVal
           @view.__av_opts_to_h(opts).each { |k, v| h[k] = v }
           value = (v = h.delete("value")) ? v.to_s : value_of(attr.to_s)
-          SafeString.new(%(<textarea#{@view.tag_options(h)} name="#{name_of(attr.to_s)}"#{id_attr(attr.to_s, h.has_key?("id"))}>\n#{HTML.escape(value)}</textarea>))
+          explicit_name = h.has_key?("name")
+          h["name"] = name_of(attr.to_s) unless explicit_name
+          SafeString.new(%(<textarea#{@view.tag_options(h)}#{id_attr(attr.to_s, h.has_key?("id"))}>\n#{HTML.escape(value)}</textarea>))
         end
 
         # ActionText Tags::ActionText (lexxy editor, Rails 8.2): name
