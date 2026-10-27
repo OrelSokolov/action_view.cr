@@ -157,16 +157,18 @@ module ActionView
       VOID_ELEMENTS = %w(area base br col embed hr img input keygen link
                          meta source track wbr)
 
-      def __av_tag_content(tag_name : String, content_value : String?, **attrs) : SafeString
+      # content_value accepts SafeString (html_safe content passes raw —
+      # Rails tag.style(css.to_s.html_safe)); plain String is escaped.
+      def __av_tag_content(tag_name : String, content_value : String? | SafeString, **attrs) : SafeString
         __av_tag_body(tag_name, __av_escape_content(content_value), attrs)
       end
 
-      def __av_tag_block(tag_name : String, content_value : String?, **attrs, &) : SafeString
+      def __av_tag_block(tag_name : String, content_value : String? | SafeString, **attrs, &) : SafeString
         body = __av_escape_content(content_value) + capture { yield }.to_s
         __av_tag_body(tag_name, body, attrs)
       end
 
-      def __av_escape_content(content : String?) : String
+      def __av_escape_content(content : String? | SafeString) : String
         return "" if content.nil?
         content.is_a?(SafeString) ? content.to_s : HTML.escape(content)
       end
