@@ -134,7 +134,7 @@ module ActionView
         SafeString.new(String.build do |io|
           io << %(<input type="hidden" name="#{name}" id="#{__av_sanitize_id(name)}")
           io << %( value="#{HTML.escape(value)}") if value
-          io << %( autocomplete="off")
+          io << %( autocomplete="off") unless FormTagHelper.remove_hidden_field_autocomplete
           io << tag_options(opts) << " />"
         end)
       end
